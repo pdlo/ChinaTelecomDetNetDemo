@@ -6,7 +6,6 @@
 
 from datetime import datetime,timedelta
 import logging
-from pathlib import Path
 from .get_routing import get_routings
 from .update_table import update_table
 from .util import config

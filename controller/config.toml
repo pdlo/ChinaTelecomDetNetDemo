@@ -1,0 +1,2 @@
+#每隔多长时间重新计算一次
+schedule_interval = 10

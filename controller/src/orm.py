@@ -1,8 +1,11 @@
+"""
+包含各个表的orm
+运行此文件建表
+"""
+
 from typing import Optional
 from sqlmodel import Field, SQLModel, create_engine,Session,select
-
-sqlite_url = f"sqlite:///database.db"
-engine = create_engine(sqlite_url, echo=True)
+from pathlib import Path
 
 class Switch(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -30,8 +33,9 @@ class Business(SQLModel, table=True):
     loss:Optional[float]
     disorder:Optional[float]
 
-sqlite_url = f"sqlite:///../database.db"
-engine = create_engine(sqlite_url, echo=True)
+sqlite_file=Path(__file__).parent.parent/"database.db"
+sqlite_url = f"sqlite:///{sqlite_file}"
+engine = create_engine(sqlite_url, echo=False)
 
 def main():
     SQLModel.metadata.create_all(engine)

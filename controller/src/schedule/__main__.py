@@ -5,15 +5,16 @@
 """
 
 from datetime import datetime,timedelta
-import logging
-from .get_routing import get_routings
-from .update_table import update_table
-from .util import config
+from src.schedule.get_routing import get_routings
+from src.schedule.update_table import update_table
+from src.schedule.util import config,logger
 
-logging.basicConfig(encoding='utf-8', level=logging.INFO)
+if __name__!="__main__":
+    raise Exception("试图import此代码")
 
-def main():
-    last_schedule_time=datetime.min
+last_schedule_time=datetime.min
+logger.info("已启动调度程序")
+try:
     while(True):
         now_time=datetime.now()
         if now_time-last_schedule_time < timedelta(seconds=config["schedule_interval"]):
@@ -22,4 +23,6 @@ def main():
         routings = get_routings()
         for id,table in routings.items():
             update_table(id,table)
-        logging.info(f"{datetime.now()} 下发流表")
+        logger.info(f"已下发流表")
+except KeyboardInterrupt:
+    logger.info("已停止调度程序")

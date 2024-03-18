@@ -1,0 +1,1 @@
+import src.schedule.__main__

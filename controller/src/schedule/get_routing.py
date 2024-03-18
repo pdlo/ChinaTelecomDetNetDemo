@@ -1,13 +1,6 @@
-# import sys
-# from pathlib import Path
-# root = Path(__file__).parent.parent.parent
-# sys.path.append(str(root))
-# from controller.orm import engine
-
-from dataclasses import dataclass
 from sqlmodel import Session,select
 from typing import Sequence
-from ..orm import engine,Connection,Business
+from src.orm import engine,Connection,Business
 
 # def greedy(connections:Sequence[Connection],businesses:Sequence[Business]) -> dict[int, list[str]]:
 #     """使用贪婪算法计算符合业务要求的路由"""

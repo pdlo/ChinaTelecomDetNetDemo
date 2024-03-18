@@ -1,7 +1,9 @@
-/* -*- P4_16 -*- */
 #include <core.p4>
 #include <tna.p4>
 
+/*************************************************************************
+ ************* C O N S T A N T S    A N D   T Y P E S  *******************
+**************************************************************************/
 #define MAX_PORTS 8
 #define MAX_HOPS 5
 
@@ -25,7 +27,7 @@ typedef bit<32> ip4Addr_t;
 header ethernet_t {
     macAddr_t dstAddr;
     macAddr_t srcAddr;
-    bit<16>   etherType;
+    bit<16>   ether_type;
 }
 
 //--------------------------
@@ -40,6 +42,11 @@ header arp_h {
     bit<32>  sender_ip;
     bit<48>  target_ha;
     bit<32>  target_ip;
+}
+
+//INT头部
+header probe_header_t {
+    bit<8> num_probe_data;
 }
 
 header ipv6_h {
@@ -83,67 +90,78 @@ header ipv4_t {
     ip4Addr_t dstAddr;
 }
 
-struct headers {
+
+/*************************************************************************
+ **************  I N G R E S S   P R O C E S S I N G   *******************
+ *************************************************************************/
+
+    /***********************  H E A D E R S  ************************/
+struct my_ingress_headers_t {
     ethernet_t               ethernet;
+    arp_h                    arp;
+    probe_header_t           probe_header;
     ipv6_h                   ipv6;
     srv6h_t                  srv6h;
     srv6_list_t[MAX_HOPS]    srv6_list;
     ipv4_t                   ipv4;
 }
 
-/******  G L O B A L   I N G R E S S   M E T A D A T A  *********/
+
+
+    /******  G L O B A L   I N G R E S S   M E T A D A T A  *********/
 
 struct ingress_metadata_t {
-    bit<8>   remaining1;
-    bit<8>   remaining2;
-    bit<8>   sswid;
-    bit<32>  pktcont2;
-    bit<9>   ingress_time;
     bit<8>   segment_left;
     bit<128> segment_id; 
     bit<8>   flags;
-    bit<32> temp_ip;
+    bit<32>  temp_ip;
 }
 
-/*************************************************************************
-*********************** P A R S E R  ***********************************
-*************************************************************************/
+    /***********************  P A R S E R  **************************/
 
-parser MyParser(packet_in packet,
-                out headers hdr,
-                out ingress_metadata_t meta,
-                out ingress_intrinsic_metadata_t ig_intr_md) {
-
-    state start {
-        meta.temp_ip=0;
-
+parser IngressParser(packet_in pkt,
+        /* User */    
+        out my_ingress_headers_t hdr,
+        out ingress_metadata_t meta,
+        /* Intrinsic */
+        out ingress_intrinsic_metadata_t ig_intr_md)
+{
+     state start {
         pkt.extract(ig_intr_md);
         pkt.advance(PORT_METADATA_SIZE);
         transition parse_ethernet;
     }
 
     state parse_ethernet {
-        packet.extract(hdr.ethernet);
-        transition select(hdr.ethernet.etherType) {
+        pkt.extract(hdr.ethernet);
+        transition select(hdr.ethernet.ether_type) {
+            TYPE_ARP: parse_arp;
             TYPE_IPV4: parse_ipv4;
             TYPE_IPV6: parse_ipv6;
-            TYPE_ARP: parse_arp;
+            TYPE_PROBE: parse_probe;
             default: accept;
         }
     }
 
     state parse_arp {
-        packet.extract(hdr.arp);
+        pkt.extract(hdr.arp);
         transition accept;
     }
 
     state parse_ipv4 {
-        packet.extract(hdr.ipv4);
+        pkt.extract(hdr.ipv4);
         transition accept;
     }
 
+    //INT解析
+    state parse_probe {
+        pkt.extract(hdr.probe_header);
+        transition accept;
+    }
+
+
     state parse_ipv6 {
-        packet.extract(hdr.ipv6);
+        pkt.extract(hdr.ipv6);
         transition select(hdr.ipv6.next_hdr){
             43: parse_srv6;
             default: accept;
@@ -152,59 +170,45 @@ parser MyParser(packet_in packet,
 
     //srv6解析
     state parse_srv6 {
-        packet.extract(hdr.srv6h);  //这里需要有判断segment list个数的方法
-        //meta.last_entry = hdr.srv6h.last_entry; //判断segment list个数的方法
-        meta.segment_left = hdr.srv6h.segment_left; //剩余跳数，用这个值来判断解析哪个SID
-        meta.flags = hdr.srv6h.flags - 1;
-        transition select(meta.segment_left){
-            0: accept;
+        pkt.extract(hdr.srv6h);  //这里需要有判断segment list个数的方法
+        //meta.segment_left = hdr.srv6h.segment_left; //剩余跳数，这个值为0时丢弃srv6头部
+        transition select(hdr.srv6h.segment_left){
+            0: parse_ipv4;
             default: parse_srv6_list;
         }  
     }
 
     state parse_srv6_list {
-        packet.extract(hdr.srv6_list.next); //提取segment list的栈的第一个元素
-        meta.flags = meta.flags - 1;
-        transition select(meta.flags){
-            0: parse_ipv4;
-            default: parse_srv6_list;
+        pkt.extract(hdr.srv6_list.next); //提取segment list的栈的第一个元素
+        transition accept;
         }                  
     }
-    //数据包对应的数据都能获取到，需要获取segment_list的数量，这样才好解析。
-    
-}
 
 
-/*************************************************************************
-**************  I N G R E S S   P R O C E S S I N G   *******************
-*************************************************************************/
 
-control MyIngress(
+    /***************** M A T C H - A C T I O N  *********************/
+
+control Ingress( 
     /* User */
-    inout headers hdr,
+    inout my_ingress_headers_t hdr,
     inout ingress_metadata_t meta,
     /* Intrinsic */
     in ingress_intrinsic_metadata_t ig_intr_md,
     in ingress_intrinsic_metadata_from_parser_t ig_intr_prsr_md,
     inout ingress_intrinsic_metadata_for_deparser_t ig_intr_dprsr_md,
-    inout ingress_intrinsic_metadata_for_tm_t ig_intr_tm_md) {
-    
+    inout ingress_intrinsic_metadata_for_tm_t ig_intr_tm_md)
+{
     action drop() {
-        //mark_to_drop(standard_metadata);
         ig_intr_dprsr_md.drop_ctl = 1;
     }
-
-//---------------------------------------IPV4转发-----------------------------------------------
-    action ipv4_forward(macAddr_t dstAddr, egressSpec_t port) {
-        //ipv6_h_insert();
-        //srv6_t_insert_5();
+//********************************************************
+    action ipv4_forward(bit<48> src_mac, 
+                                     bit<48> dst_mac, 
+                                     PortId_t port) {  
+        hdr.ethernet.srcAddr = src_mac;
+        hdr.ethernet.dstAddr = dst_mac;
         ig_intr_tm_md.ucast_egress_port = port;
-        hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
-        hdr.ethernet.dstAddr = dstAddr;
-        
     }
-
-
     table ipv4_lpm {
         key = {
             hdr.ipv4.dstAddr: lpm;
@@ -213,42 +217,34 @@ control MyIngress(
             ipv4_forward;
             drop;
         }
-        size = 1024;
-        default_action = drop;  // default_action必须是在actions里选一个
+        default_action = drop();
     }
- 
+//********************************************************
+//-----------------------------------------IPV6头部插入----------------------------------------------
+    action ipv6_header_insert(bit<8> next_proto){
+        //next_proto为44时，表示给INT探测包插入IPV6和SRH，为43时则是给ipv4包插入
+        hdr.ethernet.ether_type = TYPE_IPV6;
 
-//---------------------------------------IPV6转发-----------------------------------------------
-    action ipv6_forward(macAddr_t dstAddr, egressSpec_t port) {
-        //ipv6_h_insert();
-        //srv6_t_insert_5();
-        ig_intr_md.ucast_egress_port = port;
-        hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
-        hdr.ethernet.dstAddr = dstAddr;
-        
+        hdr.ipv6.setValid();
+        // 设置IPv6头部字段
+        hdr.ipv6.version = 6;  // IPv6版本
+        hdr.ipv6.traffic_class = 0;  // 通信等级
+        hdr.ipv6.flow_label = 0;  // 流标签
+        hdr.ipv6.payload_len = 10;  // 负载长度
+        hdr.ipv6.next_hdr = next_proto;  // 扩展头协议，43为SRV6数据包，44为INT数据包
+        hdr.ipv6.hop_limit = 6;  // 跳数限制
+        hdr.ipv6.src_addr = 100;  // 源地址
+        hdr.ipv6.dst_addr = 80;  // 目标地址
     }
-
-
-    table ipv6_lpm {
-        key = {
-            hdr.ipv6.dst_addr: lpm;
-        }
-        actions = {
-            ipv6_forward;
-            drop;
-        }
-        size = 1024;
-        default_action = drop;  // default_action必须是在actions里选一个
-    }
-
 
 //---------------------------------------srv6插入-----------------------------------------------
 
     action srv6_insert(bit<8> num_segments, bit<128> s1, bit<128> s2, bit<128> s3, bit<128> s4, bit<128> s5){
-        //srv6 header插入
+        //srv6 header插入，这个num_segements是固定的
         hdr.srv6h.setValid();
-        hdr.srv6h.next_hdr = 2;  //待定
-        hdr.srv6h.hdr_ext_len =  (num_segments << 4) + 8;  
+        hdr.srv6h.next_hdr = 2;  
+        //hdr.srv6h.hdr_ext_len =  (num_segments << 4) + 8;  
+        hdr.srv6h.hdr_ext_len = 88;
         hdr.srv6h.routing_type = 4;
         hdr.srv6h.segment_left = num_segments;
         hdr.srv6h.last_entry = num_segments - 1;
@@ -257,9 +253,6 @@ control MyIngress(
 
 
         hdr.ipv6.payload_len = hdr.ipv6.payload_len + 88;  //8+16*5=88
-        //insert_srv6h_header(5); 最多5跳，若少于5跳，后面的ipv6地址置0
-        //hdr.srv6_list.push_front();
-        //push_front(count)是将元素右移count位，然后前count位失效，后count位丢弃，不是压入栈。
 
         hdr.srv6_list[0].setValid();
         hdr.srv6_list[0].segment_id = s1;
@@ -281,7 +274,7 @@ control MyIngress(
     table srv6_handle {      
         //插入和丢弃srv6头部
         key = {
-           hdr.ethernet.etherType: exact;       
+           hdr.ethernet.ether_type: exact;       
         }
         actions = {
             srv6_insert;
@@ -293,7 +286,7 @@ control MyIngress(
 //---------------------------------------srv6丢弃-----------------------------------------------  
 
     action srv6_abandon_set() {
-        hdr.ethernet.etherType = TYPE_IPV4;
+        hdr.ethernet.ether_type = TYPE_IPV4;
 
         hdr.ipv6.setInvalid();
 
@@ -315,61 +308,63 @@ control MyIngress(
         }
         default_action = drop();
     }
+//------------------------------------------------------------------------------------------------------
 
-
-//-------------------------------------------------------------------------------------------------
     apply {
         if (hdr.arp.isValid()) {
-            
-            hdr.ethernet.dst_mac = hdr.ethernet.src_mac;
-            hdr.ethernet.src_mac = VIRTUAL_MAC;
+            //arp欺骗
+            hdr.ethernet.dstAddr = hdr.ethernet.srcAddr;
+            hdr.ethernet.srcAddr = VIRTUAL_MAC;
 
             hdr.arp.OPER = 2;
 
             meta.temp_ip = hdr.arp.sender_ip;
             
             hdr.arp.sender_ip = hdr.arp.target_ip;
-
             hdr.arp.target_ip = meta.temp_ip;
-            hdr.arp.target_ha = hdr.arp.sender_ha;
 
+            hdr.arp.target_ha = hdr.arp.sender_ha;
             hdr.arp.sender_ha = VIRTUAL_MAC;
             
             ig_intr_tm_md.ucast_egress_port = ig_intr_md.ingress_port;
         }
         else{
-            if(hdr.srv6.isValid()){
-                srv6_abandon.apply();
+            if(hdr.srv6h.isValid()){
+                if(hdr.srv6h.segment_left == 0){
+                    //srv6头部丢弃
+                    srv6_abandon.apply();
+                }
             }
             else{
+                //srv6头部插入
+                if(hdr.probe_header.isValid()){
+                    ipv6_header_insert(44);
+                }
+                else{
+                    ipv6_header_insert(43);
+                }
                 srv6_handle.apply();
             }
-            ipv6_lpm.apply();
+            ipv4_lpm.apply(); //终端发ipv4包还是ipv6包？
         }
     }
-    
 }
 
-/*************************************************************************
-***********************  D E P A R S E R  *******************************
-*************************************************************************/
+    /*********************  D E P A R S E R  ************************/
 
-control MyDeparser(packet_out packet, 
+control IngressDeparser(packet_out pkt,
         /* User */
         inout my_ingress_headers_t hdr,
         in ingress_metadata_t meta,
         /* Intrinsic */
-        in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md) 
+        in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md)
 {
     apply {
-        packet.emit(hdr.ethernet);
-        packet.emit(hdr.ipv6);
-        packet.emit(hdr.srv6h);
-        packet.emit(hdr.srv6_list);
-        packet.emit(hdr.ipv4);
+        pkt.emit(hdr.ethernet);
+        pkt.emit(hdr.arp);
+        pkt.emit(hdr.ipv4);
     }
 }
-
 
 /*************************************************************************
  ****************  E G R E S S   P R O C E S S I N G   *******************
@@ -430,17 +425,14 @@ control EgressDeparser(packet_out pkt,
     }
 }
 
-/*************************************************************************
-***********************  S W I T C H  *******************************
-*************************************************************************/
-
+/************ F I N A L   P A C K A G E ******************************/
 Pipeline(
-    MyParser(),
-    MyIngress(),
-    MyDeparser(),
-    EgressParser();
-    Egress();
-    EgressDeparser();
+    IngressParser(),
+    Ingress(),
+    IngressDeparser(),
+    EgressParser(),
+    Egress(),
+    EgressDeparser()
 ) pipe;
 
 Switch(pipe) main;

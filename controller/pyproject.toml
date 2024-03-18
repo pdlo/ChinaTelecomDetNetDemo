@@ -1,0 +1,19 @@
+#这玩意是pdm用的，为了方便后续移植提前做一下依赖管理。如果不想用可以忽略
+[project]
+name = "controller"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "Wang Xinyu", email = "hi_wangxinyu@163.com"},
+]
+dependencies = [
+    "sqlmodel>=0.0.16",
+    "toml>=0.10.2",
+]
+requires-python = "==3.8.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false

@@ -16,7 +16,7 @@ class Sgw(SQLModel, table=True):
     """
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
-    console_ip:str = Field(description="用于ssh的ipv4地址，使用类似10.0.2.1的格式")
+    console_ip:str = Field(description="用于ssh的ipv4地址和端口，使用类似219.242.112.215:6153的格式")
     srv6_locator:str = Field(description="半个ipv6地址（64bit），使用类似2001:0db8的格式")
 
 class SgwInterface(SQLModel, table=True):
@@ -59,7 +59,7 @@ class Cpe(SQLModel, table=True):
     """
     id: Optional[int] = Field(default=None, primary_key=True)
     name:str
-    console_ip:str = Field(description="用于ssh的ipv4地址，使用类似10.0.2.1的格式")
+    console_ip:str = Field(description="用于ssh的ipv4地址和端口，使用类似219.242.112.215:6153的格式")
     connect_sgw:int = Field(foreign_key="sgw.id")
 
 class Business(SQLModel, table=True):
@@ -93,7 +93,7 @@ class Route(SQLModel, table=True):
 
 sqlite_file=Path(__file__).parent.parent/"database.db"
 sqlite_url = f"sqlite:///{sqlite_file}"
-engine = create_engine(sqlite_url, echo=False)
+engine = create_engine(sqlite_url, echo=True)
 
 def main():
     SQLModel.metadata.create_all(engine)

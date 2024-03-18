@@ -19,12 +19,12 @@ setup()
 try:
     while(True):
         now_time=datetime.now()
-        if now_time-last_schedule_time < timedelta(seconds=config["schedule_interval"]):
+        if now_time-last_schedule_time < timedelta(seconds=config["schedule"]["interval"]):
             continue
         last_schedule_time=now_time
         routings = get_routings()
-        for id,table in routings.items():
-            update_table(id,table)
+        for route in routings:
+            update_table(route)
         logger.info(f"已下发流表")
 except KeyboardInterrupt:
     logger.info("已停止调度程序")

@@ -2,3 +2,4 @@ controller/database.db
 **\.log
 **\__pycache__
 **\.~vsdx
+.venv

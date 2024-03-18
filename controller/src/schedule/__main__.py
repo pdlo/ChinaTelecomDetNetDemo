@@ -8,12 +8,14 @@ from datetime import datetime,timedelta
 from src.schedule.get_routing import get_routings
 from src.schedule.update_table import update_table
 from src.schedule.util import config,logger
+from src.schedule.setup import setup
 
 if __name__!="__main__":
     raise Exception("试图import此代码")
 
 last_schedule_time=datetime.min
 logger.info("已启动调度程序")
+setup()
 try:
     while(True):
         now_time=datetime.now()

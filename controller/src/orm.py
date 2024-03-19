@@ -33,6 +33,7 @@ class SgwLink(SQLModel, table=True):
     """
     id被作为外键，此表中数据不应该删除。
     此表是手动根据配置的网络填写的，程序不应修改。
+    连接有方向（因为int）。两个sgw之间需要添加两个连接。
     """
     id: Optional[int] = Field(default=None, primary_key=True)
     sgw_id_1:int = Field(foreign_key="sgw.id")

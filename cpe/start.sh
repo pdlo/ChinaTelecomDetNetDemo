@@ -21,4 +21,4 @@ LDFLAGS="-L$SDE_INSTALL/lib" \
 make
 make install
 
-/root/bf-sde-9.1.0/run_switchd.sh -p srv6
+#/root/bf-sde-9.1.0/run_switchd.sh -p srv6

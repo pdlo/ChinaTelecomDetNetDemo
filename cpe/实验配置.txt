@@ -1,0 +1,29 @@
+162 - 153 - 152 - 182
+eth1 - 4  -   33 - 33 -  4 - ens1f2
+接口    4/0    33/0    33/0        4/0
+端口    156    64       64           156
+
+
+
+153
+添加接口（这里接口和端口还不一样）
+pm port-add 4/0 10g NONE
+pm port-enb 4/0  
+pm port-add 33/0 10g NONE
+pm port-enb 33/0  
+
+
+
+162
+10.153.162.2   网关10.153.162.1
+mac e8:61:1f:37:b6:d3
+sudo ip addr add 10.153.162.2/24 dev eth1
+
+sudo ip route add 10.0.0.0/8 via 10.153.162.1 dev eth1
+
+
+182
+10.153.182.2   网关10.153.182.1
+mac a0:36:9f:ed:55:62
+sudo ip addr add 10.153.182.2/24 dev ens1f2
+sudo ip route add 10.0.0.0/8 via 10.153.182.1 dev ens1f2

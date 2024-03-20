@@ -1,3 +1,10 @@
+/*
+*cpe tofino使用的p4代码
+*目前会对于没有srv6报头的包进行ipv4匹配，然后传给sgw
+*对有ipv4报头的包进行ipv4转发
+*/
+
+
 #include <core.p4>
 #include <tna.p4>
 
@@ -10,28 +17,22 @@
 const bit<16> TYPE_IPV4 = 0x0800;
 const bit<16> TYPE_IPV6 = 0x86dd;
 const bit<16> TYPE_ARP = 0x0806;
-const bit<16> TYPE_PROBE = 0x0812;
+
 const bit<8>  IP_PROTO_TCP = 8w6;
 const bit<8>  IP_PROTO_UDP = 8w17;
 const bit<8>  IP_PROTO_ICMP = 8w1;
-const bit<48> VIRTUAL_MAC = 1;
+const bit<48> VIRTUAL_MAC = 0x0a0a0a0a0a0a;
 
 /*************************************************************************
 *********************** H E A D E R S  ***********************************
 *************************************************************************/
 
-typedef bit<9>  egressSpec_t;
-typedef bit<48> macAddr_t;
-typedef bit<32> ip4Addr_t;
-
 header ethernet_t {
-    macAddr_t dstAddr;
-    macAddr_t srcAddr;
+    bit<48> dstAddr;
+    bit<48> srcAddr;
     bit<16>   ether_type;
 }
 
-//--------------------------
-// ARP首部
 header arp_h {
     bit<16>  hardware_type;
     bit<16>  protocol_type;
@@ -42,11 +43,6 @@ header arp_h {
     bit<32>  sender_ip;
     bit<48>  target_ha;
     bit<32>  target_ip;
-}
-
-//INT头部
-header probe_header_t {
-    bit<8> num_probe_data;
 }
 
 header ipv6_h {
@@ -67,7 +63,7 @@ header srv6h_t {
     bit<8> routing_type;  //标识扩展包头类型，4表示为SRH
     bit<8> segment_left;  //用这个字段来确定剩余跳数
     bit<8> last_entry;   //最后一个seg list的索引
-    bit<8> flags;   //目前用于解析循环，写死为5
+    bit<8> flags;   
     bit<16> tag;
 }
 
@@ -86,9 +82,33 @@ header ipv4_t {
     bit<8>    ttl;
     bit<8>    protocol;
     bit<16>   hdrChecksum;
-    ip4Addr_t srcAddr;
-    ip4Addr_t dstAddr;
+    bit<32> src_addr;
+    bit<32> dst_addr;
 }
+
+//--------------------------
+//TCP首部
+header tcp_h {
+    bit<16>  src_port;
+    bit<16>  dst_port;
+    bit<32>  seq_no;
+    bit<32>  ack_no;
+    bit<4>   data_offset;
+    bit<4>   res;
+    bit<8>   flags;
+    bit<16>  window;
+    bit<16>  checksum;
+    bit<16>  urgent_ptr;
+}
+//--------------------------
+//UDP首部
+header udp_h {
+    bit<16>  src_port;
+    bit<16>  dst_port;
+    bit<16>  hdr_length;
+    bit<16>  checksum;
+}
+//--------------------------
 
 
 /*************************************************************************
@@ -99,11 +119,12 @@ header ipv4_t {
 struct my_ingress_headers_t {
     ethernet_t               ethernet;
     arp_h                    arp;
-    probe_header_t           probe_header;
     ipv6_h                   ipv6;
     srv6h_t                  srv6h;
     srv6_list_t[MAX_HOPS]    srv6_list;
     ipv4_t                   ipv4;
+    tcp_h                    tcp;
+    udp_h                    udp;
 }
 
 
@@ -111,10 +132,12 @@ struct my_ingress_headers_t {
     /******  G L O B A L   I N G R E S S   M E T A D A T A  *********/
 
 struct ingress_metadata_t {
-    bit<8>   segment_left;
-    bit<128> segment_id; 
-    bit<8>   flags;
-    bit<32>  temp_ip;
+    bit<8> num_segments;  //用于后面改变srv6长度
+    bit<128> s1;
+    bit<128> s2;
+    bit<128> s3;
+    bit<128> s4;
+    bit<128> s5;
 }
 
     /***********************  P A R S E R  **************************/
@@ -124,9 +147,9 @@ parser IngressParser(packet_in pkt,
         out my_ingress_headers_t hdr,
         out ingress_metadata_t meta,
         /* Intrinsic */
-        out ingress_intrinsic_metadata_t ig_intr_md)
-{
-     state start {
+        out ingress_intrinsic_metadata_t ig_intr_md){
+    state start {
+        meta = {0,0,0,0,0,0};
         pkt.extract(ig_intr_md);
         pkt.advance(PORT_METADATA_SIZE);
         transition parse_ethernet;
@@ -138,7 +161,7 @@ parser IngressParser(packet_in pkt,
             TYPE_ARP: parse_arp;
             TYPE_IPV4: parse_ipv4;
             TYPE_IPV6: parse_ipv6;
-            TYPE_PROBE: parse_probe;
+            //TYPE_PROBE: parse_probe;
             default: accept;
         }
     }
@@ -147,18 +170,6 @@ parser IngressParser(packet_in pkt,
         pkt.extract(hdr.arp);
         transition accept;
     }
-
-    state parse_ipv4 {
-        pkt.extract(hdr.ipv4);
-        transition accept;
-    }
-
-    //INT解析
-    state parse_probe {
-        pkt.extract(hdr.probe_header);
-        transition accept;
-    }
-
 
     state parse_ipv6 {
         pkt.extract(hdr.ipv6);
@@ -171,20 +182,76 @@ parser IngressParser(packet_in pkt,
     //srv6解析
     state parse_srv6 {
         pkt.extract(hdr.srv6h);  //这里需要有判断segment list个数的方法
-        //meta.segment_left = hdr.srv6h.segment_left; //剩余跳数，这个值为0时丢弃srv6头部
         transition select(hdr.srv6h.segment_left){
             0: parse_ipv4;
-            default: parse_srv6_list;
-        }  
+            1: parse_srv6_list_1;
+            2: parse_srv6_list_1;
+            3: parse_srv6_list_1;
+            4: parse_srv6_list_1;
+            5: parse_srv6_list_1;
+            default: reject;
+        }
     }
 
-    state parse_srv6_list {
-        pkt.extract(hdr.srv6_list.next); //提取segment list的栈的第一个元素
+    state parse_srv6_list_1 {
+        pkt.extract(hdr.srv6_list.next);
+        transition select(hdr.srv6h.segment_left){
+            1: parse_ipv4;
+            default: parse_srv6_list_2;
+        }
+    }
+    
+    state parse_srv6_list_2 {
+        pkt.extract(hdr.srv6_list.next); 
+        transition select(hdr.srv6h.segment_left){
+            2: parse_ipv4;
+            default: parse_srv6_list_3;
+        }
+    }
+
+    state parse_srv6_list_3 {
+        pkt.extract(hdr.srv6_list.next); 
+        transition select(hdr.srv6h.segment_left){
+            3: parse_ipv4;
+            default: parse_srv6_list_4;
+        }
+    }
+
+    state parse_srv6_list_4 {
+        pkt.extract(hdr.srv6_list.next); 
+        transition select(hdr.srv6h.segment_left){
+            4: parse_ipv4;
+            default: parse_srv6_list_5;
+        }
+    }
+    
+    state parse_srv6_list_5 {
+        pkt.extract(hdr.srv6_list.next); 
+        transition parse_ipv4;
+    }
+    
+
+    state parse_ipv4 {
+        pkt.extract(hdr.ipv4);
+        transition select(hdr.ipv4.protocol) {
+            IP_PROTO_TCP: parse_tcp;
+            IP_PROTO_UDP: parse_udp;
+            default: accept;
+        }
+    }
+
+    state parse_tcp {
+        pkt.extract(hdr.tcp);
         transition accept;
-        }                  
     }
 
+    state parse_udp {
+        pkt.extract(hdr.udp);
+        transition accept;
+    }
+}
 
+    
 
     /***************** M A T C H - A C T I O N  *********************/
 
@@ -201,28 +268,18 @@ control Ingress(
     action drop() {
         ig_intr_dprsr_md.drop_ctl = 1;
     }
-//********************************************************
-    action ipv4_forward(bit<48> src_mac, 
-                                     bit<48> dst_mac, 
-                                     PortId_t port) {  
+
+
+//---------------------------------------ipv6和srv6插入-----------------------------------------------
+
+    action srv6_insert(bit<8> num_segments, bit<8> last_entry,
+        bit<48> src_mac, bit<48> dst_mac, bit<9> port, 
+        bit<128> s1, bit<128> s2, bit<128> s3, bit<128> s4, bit<128> s5){
+        
+        //ipv4转发
         hdr.ethernet.srcAddr = src_mac;
         hdr.ethernet.dstAddr = dst_mac;
         ig_intr_tm_md.ucast_egress_port = port;
-    }
-    table ipv4_lpm {
-        key = {
-            hdr.ipv4.dstAddr: lpm;
-        }
-        actions = {
-            ipv4_forward;
-            drop;
-        }
-        default_action = drop();
-    }
-//********************************************************
-//-----------------------------------------IPV6头部插入----------------------------------------------
-    action ipv6_header_insert(bit<8> next_proto){
-        //next_proto为44时，表示给INT探测包插入IPV6和SRH，为43时则是给ipv4包插入
         hdr.ethernet.ether_type = TYPE_IPV6;
 
         hdr.ipv6.setValid();
@@ -231,53 +288,40 @@ control Ingress(
         hdr.ipv6.traffic_class = 0;  // 通信等级
         hdr.ipv6.flow_label = 0;  // 流标签
         hdr.ipv6.payload_len = 10;  // 负载长度
-        hdr.ipv6.next_hdr = next_proto;  // 扩展头协议，43为SRV6数据包，44为INT数据包
+        hdr.ipv6.next_hdr = 43;  // 扩展头协议，43为SRV6数据包，44为INT数据包
         hdr.ipv6.hop_limit = 6;  // 跳数限制
         hdr.ipv6.src_addr = 100;  // 源地址
         hdr.ipv6.dst_addr = 80;  // 目标地址
-    }
 
-//---------------------------------------srv6插入-----------------------------------------------
-
-    action srv6_insert(bit<8> num_segments, bit<128> s1, bit<128> s2, bit<128> s3, bit<128> s4, bit<128> s5){
-        //srv6 header插入，这个num_segements是固定的
+        //srv6 header插入，这个num_segements是总共的跳数
         hdr.srv6h.setValid();
-        hdr.srv6h.next_hdr = 2;  
-        //hdr.srv6h.hdr_ext_len =  (num_segments << 4) + 8;  
+        hdr.srv6h.next_hdr = 4;  //1为icmp,2为IGMP，6为TCP协议，17为UDP，4为ipv4，41为ipv6
         hdr.srv6h.hdr_ext_len = 88;
         hdr.srv6h.routing_type = 4;
         hdr.srv6h.segment_left = num_segments;
-        hdr.srv6h.last_entry = num_segments - 1;
+        hdr.srv6h.last_entry = last_entry;  //这里tofino识别sid个数通过last_entry这个字段，很神奇
         hdr.srv6h.flags = 0;
         hdr.srv6h.tag = 0;
 
 
-        hdr.ipv6.payload_len = hdr.ipv6.payload_len + 88;  //8+16*5=88
+        hdr.ipv6.payload_len = hdr.ipv4.totalLen + 88;  //8+16*5=88
 
-        hdr.srv6_list[0].setValid();
-        hdr.srv6_list[0].segment_id = s1;
+        meta.num_segments = num_segments;
 
-        hdr.srv6_list[1].setValid();
-        hdr.srv6_list[1].segment_id = s2;
+        meta.s1 = s1;
+        meta.s2 = s2;
+        meta.s3 = s3;
+        meta.s4 = s4;
+        meta.s5 = s5;
 
-        hdr.srv6_list[2].setValid();
-        hdr.srv6_list[2].segment_id = s3;
-
-        hdr.srv6_list[3].setValid();
-        hdr.srv6_list[3].segment_id = s4;
-
-        hdr.srv6_list[4].setValid();
-        hdr.srv6_list[4].segment_id = s5;
-
-        
     }
-    table srv6_handle {      
-        //插入和丢弃srv6头部
+    table insert_srv6 {      
+        //插入srv6头部
         key = {
-           hdr.ethernet.ether_type: exact;       
+           hdr.ipv4.dst_addr: lpm;       
         }
         actions = {
-            srv6_insert;
+            srv6_insert();
             drop;
         }
         default_action = drop();   
@@ -285,70 +329,130 @@ control Ingress(
 
 //---------------------------------------srv6丢弃-----------------------------------------------  
 
-    action srv6_abandon_set() {
-        hdr.ethernet.ether_type = TYPE_IPV4;
-
-        hdr.ipv6.setInvalid();
-
-        hdr.srv6h.setInvalid();
-        hdr.srv6_list[0].setInvalid();
-        hdr.srv6_list[1].setInvalid();
-        hdr.srv6_list[2].setInvalid();
-        hdr.srv6_list[3].setInvalid();
-        hdr.srv6_list[4].setInvalid();   
+    action srv6_abandon_set(bit<48> src_mac, bit<48> dst_mac, bit<9> port) {
+        //ipv4转发
+        hdr.ethernet.srcAddr = src_mac;
+        hdr.ethernet.dstAddr = dst_mac;
+        ig_intr_tm_md.ucast_egress_port = port;
+        hdr.ethernet.ether_type = TYPE_IPV4; 
     }
 
     table srv6_abandon{
         key = {
-            hdr.ipv6.next_hdr: exact;
+            hdr.ipv4.dst_addr: lpm;
         }
         actions = {
-            srv6_abandon_set;
-            drop;
+            srv6_abandon_set();
+            drop();
         }
         default_action = drop();
     }
-//------------------------------------------------------------------------------------------------------
-
+    
+    //------------------------------------------------------------------------------------------------------
+    //                                            apply
+    //--------------------------------------------------------------------------------------------------------
     apply {
         if (hdr.arp.isValid()) {
-            //arp欺骗
+            //10.153.182.2   0x0a99a202
+            /*
+            if (hdr.arp.target_ip == 0x0a99b602) {
+                    //ask who is 10.153.182.2
+                    hdr.ethernet.dstAddr = hdr.ethernet.srcAddr;
+                    hdr.ethernet.srcAddr = 0x000015304156;
+                    hdr.arp.OPER = 2;
+                    hdr.arp.target_ha = hdr.arp.sender_ha;
+                    hdr.arp.target_ip = hdr.arp.sender_ip;
+                    hdr.arp.sender_ip = 0x0a99b602;
+                    hdr.arp.sender_ha = 0x000015304156;
+                    ig_intr_tm_md.ucast_egress_port = ig_intr_md.ingress_port;
+                }
+              */  
+            
             hdr.ethernet.dstAddr = hdr.ethernet.srcAddr;
             hdr.ethernet.srcAddr = VIRTUAL_MAC;
-
             hdr.arp.OPER = 2;
-
-            meta.temp_ip = hdr.arp.sender_ip;
-            
+            bit<32> temp_ip = hdr.arp.sender_ip;
             hdr.arp.sender_ip = hdr.arp.target_ip;
-            hdr.arp.target_ip = meta.temp_ip;
-
+            hdr.arp.target_ip = temp_ip;
             hdr.arp.target_ha = hdr.arp.sender_ha;
             hdr.arp.sender_ha = VIRTUAL_MAC;
-            
             ig_intr_tm_md.ucast_egress_port = ig_intr_md.ingress_port;
         }
-        else{
-            if(hdr.srv6h.isValid()){
-                if(hdr.srv6h.segment_left == 0){
-                    //srv6头部丢弃
-                    srv6_abandon.apply();
+        else if (hdr.srv6h.isValid()) {
+            //删除srv6头部
+            hdr.ipv6.setInvalid();
+            hdr.srv6h.setInvalid();
+            hdr.srv6_list[0].setInvalid();
+            hdr.srv6_list[1].setInvalid();
+            hdr.srv6_list[2].setInvalid();
+            hdr.srv6_list[3].setInvalid();
+            hdr.srv6_list[4].setInvalid();   
+            srv6_abandon.apply();
+        }
+        else {
+            if (hdr.ipv4.isValid()){
+                insert_srv6.apply();
+                if (meta.num_segments == 1) {
+                    hdr.srv6_list[0].setValid();
+                    hdr.srv6_list[0].segment_id = meta.s1;
                 }
-            }
-            else{
-                //srv6头部插入
-                if(hdr.probe_header.isValid()){
-                    ipv6_header_insert(44);
+                else if (meta.num_segments == 2) {
+                    hdr.srv6_list[0].setValid();
+                    hdr.srv6_list[0].segment_id = meta.s1;
+
+                    hdr.srv6_list[1].setValid();
+                    hdr.srv6_list[1].segment_id = meta.s2;
+                }
+                else if (meta.num_segments == 3) {
+                    hdr.srv6_list[0].setValid();
+                    hdr.srv6_list[0].segment_id = meta.s1;
+
+                    hdr.srv6_list[1].setValid();
+                    hdr.srv6_list[1].segment_id = meta.s2;
+
+                    hdr.srv6_list[2].setValid();
+                    hdr.srv6_list[2].segment_id = meta.s3;
+
+                    hdr.srv6_list[3].setInvalid();
+                    hdr.srv6_list[4].setInvalid();
+                }
+                else if (meta.num_segments == 4) {
+                    hdr.srv6_list[0].setValid();
+                    hdr.srv6_list[0].segment_id = meta.s1;
+
+                    hdr.srv6_list[1].setValid();
+                    hdr.srv6_list[1].segment_id = meta.s2;
+
+                    hdr.srv6_list[2].setValid();
+                    hdr.srv6_list[2].segment_id = meta.s3;
+
+                    hdr.srv6_list[3].setValid();
+                    hdr.srv6_list[3].segment_id = meta.s4;
+                }
+                else if (meta.num_segments == 5) {
+                    hdr.srv6_list[0].setValid();
+                    hdr.srv6_list[0].segment_id = meta.s1;
+
+                    hdr.srv6_list[1].setValid();
+                    hdr.srv6_list[1].segment_id = meta.s2;
+
+                    hdr.srv6_list[2].setValid();
+                    hdr.srv6_list[2].segment_id = meta.s3;
+
+                    hdr.srv6_list[3].setValid();
+                    hdr.srv6_list[3].segment_id = meta.s4;
+
+                    hdr.srv6_list[4].setValid();
+                    hdr.srv6_list[4].segment_id = meta.s5; 
                 }
                 else{
-                    ipv6_header_insert(43);
+                    drop();
                 }
-                srv6_handle.apply();
+            } 
             }
-            ipv4_lpm.apply(); //终端发ipv4包还是ipv6包？
         }
     }
-}
+
 
     /*********************  D E P A R S E R  ************************/
 
@@ -362,7 +466,12 @@ control IngressDeparser(packet_out pkt,
     apply {
         pkt.emit(hdr.ethernet);
         pkt.emit(hdr.arp);
+        pkt.emit(hdr.ipv6);
+        pkt.emit(hdr.srv6h);
+        pkt.emit(hdr.srv6_list);
         pkt.emit(hdr.ipv4);
+        pkt.emit(hdr.tcp);
+        pkt.emit(hdr.udp);
     }
 }
 

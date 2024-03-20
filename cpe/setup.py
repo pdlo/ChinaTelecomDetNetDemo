@@ -64,7 +64,7 @@ clear_all()
 #ipv4转发
 #ipv4_lpm = p4.Ingress.ipv4_lpm
 #srv6处理
-srv6_handle = p4.Ingress.srv6_handle
+insert_srv6 = p4.Ingress.insert_srv6
 #srv6头部丢弃
 #srv6_abandon = p4.Ingress.srv6_abandon
 
@@ -76,11 +76,11 @@ srv6_handle = p4.Ingress.srv6_handle
 
 #srv6处理
 #ipv4包插入
-#srv6_handle.add_with_srv6_insert(ether_type=0x0800, num_segments=0x05, s1=0x0a080002111111112222222233333333, s2=0x0a080002111111112222222233333333, s3=0x0a080002111111112222222233333333, s4=0x0a080002111111112222222233333333, s5=0x0a080002111111112222222233333333)
-srv6_handle.add_with_srv6_insert(dst_addr=0x0a99b602, dst_addr_p_length=32, num_segments=0x05 ,src_mac=0x000000153182, dst_mac=0xa0369fed5562, port=172, s1=0x1, s2=0x2, s3=0x3, s4=0x4, s5=0x5)
-srv6_handle.add_with_srv6_insert(dst_addr=0x0a99a202, dst_addr_p_length=32, num_segments=0x05, src_mac=0x000000153162, dst_mac=0xe8611f37b6d3, port=156, s1=0x1, s2=0x2, s3=0x3, s4=0x4, s5=0x5)
+#insert_srv6.add_with_srv6_insert(ether_type=0x0800, num_segments=0x05, s1=0x0a080002111111112222222233333333, s2=0x0a080002111111112222222233333333, s3=0x0a080002111111112222222233333333, s4=0x0a080002111111112222222233333333, s5=0x0a080002111111112222222233333333)
+insert_srv6.add_with_srv6_insert(dst_addr=0x0a99b602, dst_addr_p_length=32, num_segments=0x05 ,src_mac=0x000000153182, dst_mac=0xa0369fed5562, port=172, s1=0x1, s2=0x2, s3=0x3, s4=0x4, s5=0x5)
+insert_srv6.add_with_srv6_insert(dst_addr=0x0a99a202, dst_addr_p_length=32, num_segments=0x05, src_mac=0x000000153162, dst_mac=0xe8611f37b6d3, port=156, s1=0x1, s2=0x2, s3=0x3, s4=0x4, s5=0x5)
 #INT包插入
-#srv6_handle.add_with_srv6_insert(ether_type=0x0812, num_segments=0x05, s1=0x000181, s2=0x000182, s3=0x000183, s4=0x000184, s5=0x000185)
+#insert_srv6.add_with_srv6_insert(ether_type=0x0812, num_segments=0x05, s1=0x000181, s2=0x000182, s3=0x000183, s4=0x000184, s5=0x000185)
 
 
 
@@ -92,6 +92,6 @@ print("""
 """)
 print ("Table ipv4_lpm:")
 #ipv4_lpm.dump(table=True)
-print ("Table srv6_handle:")
-srv6_handle.dump(table=True)
+print ("Table insert_srv6:")
+insert_srv6.dump(table=True)
                        

@@ -132,12 +132,15 @@ struct my_ingress_headers_t {
     /******  G L O B A L   I N G R E S S   M E T A D A T A  *********/
 
 struct ingress_metadata_t {
+<<<<<<< HEAD
     bit<8> num_segments;  //用于后面改变srv6长度
     bit<128> s1;
     bit<128> s2;
     bit<128> s3;
     bit<128> s4;
     bit<128> s5;
+=======
+>>>>>>> b920209a1d9a4d705e0266e8518f9c671d280c1d
 }
 
     /***********************  P A R S E R  **************************/
@@ -149,7 +152,10 @@ parser IngressParser(packet_in pkt,
         /* Intrinsic */
         out ingress_intrinsic_metadata_t ig_intr_md){
     state start {
+<<<<<<< HEAD
         meta = {0,0,0,0,0,0};
+=======
+>>>>>>> b920209a1d9a4d705e0266e8518f9c671d280c1d
         pkt.extract(ig_intr_md);
         pkt.advance(PORT_METADATA_SIZE);
         transition parse_ethernet;
@@ -229,7 +235,10 @@ parser IngressParser(packet_in pkt,
         pkt.extract(hdr.srv6_list.next); 
         transition parse_ipv4;
     }
+<<<<<<< HEAD
     
+=======
+>>>>>>> b920209a1d9a4d705e0266e8518f9c671d280c1d
 
     state parse_ipv4 {
         pkt.extract(hdr.ipv4);
@@ -272,7 +281,11 @@ control Ingress(
 
 //---------------------------------------ipv6和srv6插入-----------------------------------------------
 
+<<<<<<< HEAD
     action srv6_insert(bit<8> num_segments, bit<8> last_entry,
+=======
+    action srv6_insert(bit<8> num_segments, 
+>>>>>>> b920209a1d9a4d705e0266e8518f9c671d280c1d
         bit<48> src_mac, bit<48> dst_mac, bit<9> port, 
         bit<128> s1, bit<128> s2, bit<128> s3, bit<128> s4, bit<128> s5){
         
@@ -295,11 +308,19 @@ control Ingress(
 
         //srv6 header插入，这个num_segements是总共的跳数
         hdr.srv6h.setValid();
+<<<<<<< HEAD
         hdr.srv6h.next_hdr = 4;  //1为icmp,2为IGMP，6为TCP协议，17为UDP，4为ipv4，41为ipv6
         hdr.srv6h.hdr_ext_len = 88;
         hdr.srv6h.routing_type = 4;
         hdr.srv6h.segment_left = num_segments;
         hdr.srv6h.last_entry = last_entry;  //这里tofino识别sid个数通过last_entry这个字段，很神奇
+=======
+        hdr.srv6h.next_hdr = 2;  
+        hdr.srv6h.hdr_ext_len = 88;
+        hdr.srv6h.routing_type = 4;
+        hdr.srv6h.segment_left = num_segments;
+        hdr.srv6h.last_entry = num_segments;
+>>>>>>> b920209a1d9a4d705e0266e8518f9c671d280c1d
         hdr.srv6h.flags = 0;
         hdr.srv6h.tag = 0;
 
@@ -314,11 +335,27 @@ control Ingress(
         meta.s4 = s4;
         meta.s5 = s5;
 
+<<<<<<< HEAD
+=======
+        hdr.srv6_list[2].setValid();
+        hdr.srv6_list[2].segment_id = s3;
+
+        hdr.srv6_list[3].setValid();
+        hdr.srv6_list[3].segment_id = s4;
+
+        hdr.srv6_list[4].setValid();
+        hdr.srv6_list[4].segment_id = s5;  
+
+>>>>>>> b920209a1d9a4d705e0266e8518f9c671d280c1d
     }
     table insert_srv6 {      
         //插入srv6头部
         key = {
+<<<<<<< HEAD
            hdr.ipv4.dst_addr: lpm;       
+=======
+            hdr.ipv4.dst_addr: lpm;       
+>>>>>>> b920209a1d9a4d705e0266e8518f9c671d280c1d
         }
         actions = {
             srv6_insert();
@@ -378,7 +415,11 @@ control Ingress(
             hdr.arp.sender_ha = VIRTUAL_MAC;
             ig_intr_tm_md.ucast_egress_port = ig_intr_md.ingress_port;
         }
+<<<<<<< HEAD
         else if (hdr.srv6h.isValid()) {
+=======
+        else if (hdr.srv6h.isValid()){
+>>>>>>> b920209a1d9a4d705e0266e8518f9c671d280c1d
             //删除srv6头部
             hdr.ipv6.setInvalid();
             hdr.srv6h.setInvalid();
@@ -392,6 +433,7 @@ control Ingress(
         else {
             if (hdr.ipv4.isValid()){
                 insert_srv6.apply();
+<<<<<<< HEAD
                 if (meta.num_segments == 1) {
                     hdr.srv6_list[0].setValid();
                     hdr.srv6_list[0].segment_id = meta.s1;
@@ -449,6 +491,8 @@ control Ingress(
                     drop();
                 }
             } 
+=======
+>>>>>>> b920209a1d9a4d705e0266e8518f9c671d280c1d
             }
         }
     }

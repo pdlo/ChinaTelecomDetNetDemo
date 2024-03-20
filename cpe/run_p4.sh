@@ -1,3 +1,6 @@
+## 先杀进程
+bash ./shutdown.sh
+
 ##编译（初始环境编译）：
 export SDE=/root/bf-sde-9.1.0
 export SDE_INSTALL=$SDE/install

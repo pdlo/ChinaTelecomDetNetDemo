@@ -62,7 +62,18 @@ class Cpe(SQLModel, table=True):
     name:str
     console_ip:str = Field(description="用于ssh的ipv4地址和端口，使用类似219.242.112.215:6153的格式")
     connect_sgw:int = Field(foreign_key="sgw.id")
+    port_to_sgw:int = Field(description="p4程序中的端口号")
     srv6_locator:str = Field(description="半个ipv6地址（64bit），使用类似2001:0db8的格式")
+
+class Host(SQLModel, table=True):
+    """
+    id被作为外键，此表中数据不应该删除。
+    此表是手动根据配置的网络填写的，程序不应修改。
+    """
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name:str
+    ip: str
+    cpe_id:int = Field(foreign_key="cpe.id",description="入网cpe")
 
 class Business(SQLModel, table=True):
     """
@@ -71,11 +82,9 @@ class Business(SQLModel, table=True):
     不在表中的业务或tos为0按照默认路由走
     """
     id: Optional[int] = Field(default=None, primary_key=True)
-    src_ip:str = Field(description="源主机的ip地址")
-    src_cpe_id:int = Field(foreign_key="cpe.id",description="入网cpe")
-    dst_ip:str = Field(description="目的主机的ip地址")
-    dst_port:str = Field(description="目的主机的端口号")
-    dst_cpe_id:int = Field(foreign_key="cpe.id",description="出网cpe")
+    src_host_id:str = Field(foreign_key="host.id")
+    dst_host_id:str = Field(foreign_key="host.id",description="目的主机的ip地址")
+    dst_port:int = Field(description="目的主机的端口号")
     delay:Optional[int]=Field(default=None)
     rate:Optional[int]=Field(default=None)
     loss:Optional[float]=Field(default=None)

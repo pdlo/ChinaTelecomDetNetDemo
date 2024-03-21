@@ -171,3 +171,4 @@ cython_debug/
 #wxy自己的测试代码
 controller/tests/dbtest.py
 controller/tests/test.py
+controller/config.toml

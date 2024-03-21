@@ -1,0 +1,8 @@
+#用于实例的配置文件，请从文件名去掉example_并把账号密码等敏感信息修改为真是值
+
+[schedule]
+interval = 10#每隔多长时间重新计算一次
+
+[internal_network.tofino]
+user = 'this is not real user'#处于安全考虑，请联系组内成员
+password = 'this is not real password'

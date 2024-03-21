@@ -62,6 +62,7 @@ class Cpe(SQLModel, table=True):
     name:str
     console_ip:str = Field(description="用于ssh的ipv4地址和端口，使用类似219.242.112.215:6153的格式")
     connect_sgw:int = Field(foreign_key="sgw.id")
+    srv6_locator:str = Field(description="半个ipv6地址（64bit），使用类似2001:0db8的格式")
 
 class Business(SQLModel, table=True):
     """
@@ -86,15 +87,10 @@ class Route(SQLModel, table=True):
     此表由schedule程序写入。仅用于展示。
     """
     id: Optional[int] = Field(default=None, primary_key=True)
-    src_cpe_id=Field(foreign_key="cpe.id",description="入网cpe")
-    dst_cpe_id=Field(foreign_key="cpe.id",description="出网cpe")
+    src_cpe_id:int=Field(foreign_key="cpe.id",description="入网cpe")
+    dst_cpe_id:int=Field(foreign_key="cpe.id",description="出网cpe")
     tos:int=Field(description="8bit，0~255")
-    hop0:Optional[int]=Field(default=0,foreign_key="sgw.id",description="必定是cpe连接的sgw。为了可视化方便保留此冗余。")
-    hop1:Optional[int]=Field(default=0,foreign_key="sgw.id")
-    hop2:Optional[int]=Field(default=0,foreign_key="sgw.id")
-    hop3:Optional[int]=Field(default=0,foreign_key="sgw.id")
-    hop4:Optional[int]=Field(default=0,foreign_key="sgw.id")
-    hop5:Optional[int]=Field(default=0,foreign_key="sgw.id")
+    route:str= Field(description="用逗号分割的若干个sgw.id。(不包含cpe)")
 
 sqlite_file=Path(__file__).parent.parent/"database.db"
 sqlite_url = f"sqlite:///{sqlite_file}"

@@ -65,12 +65,12 @@ class Cpe(SQLModel, table=True):
 
 class Business(SQLModel, table=True):
     """
-    id被作为外键，此表中数据不应该删除。希望删除业务时请把enabled置为False。
-    此表暂定是手动填写的，后续业务可能改变。
+    所有被特殊对待的业务。
+    表中的业务将按照route中对应的表项进行路由。
+    不在表中的业务或tos为0按照默认路由走
     """
     id: Optional[int] = Field(default=None, primary_key=True)
     src_ip:str = Field(description="源主机的ip地址")
-    src_port:str = Field(description="源主机的端口号")
     src_cpe_id:int = Field(foreign_key="cpe.id",description="入网cpe")
     dst_ip:str = Field(description="目的主机的ip地址")
     dst_port:str = Field(description="目的主机的端口号")
@@ -79,18 +79,22 @@ class Business(SQLModel, table=True):
     rate:Optional[int]=Field(default=None)
     loss:Optional[float]=Field(default=None)
     disorder:Optional[float]=Field(default=None)
-    create_datetime:Optional[datetime]=Field(default=None)
-    enabled:bool
+    tos:Optional[int]=Field(default=0,description="8bit，0~255")
 
 class Route(SQLModel, table=True):
     """
-    此表由schedule程序写入。仅用于记录和展示。
-    似乎不能保证和当前bmv2路由的一致性。
+    此表由schedule程序写入。仅用于展示。
     """
     id: Optional[int] = Field(default=None, primary_key=True)
-    business_id:int = Field(foreign_key="business.id")
-    create_datetime:datetime
-    route:str = Field(description="逗号分割的若干sgw_id")
+    src_cpe_id=Field(foreign_key="cpe.id",description="入网cpe")
+    dst_cpe_id=Field(foreign_key="cpe.id",description="出网cpe")
+    tos:int=Field(description="8bit，0~255")
+    hop0:Optional[int]=Field(default=0,foreign_key="sgw.id",description="必定是cpe连接的sgw。为了可视化方便保留此冗余。")
+    hop1:Optional[int]=Field(default=0,foreign_key="sgw.id")
+    hop2:Optional[int]=Field(default=0,foreign_key="sgw.id")
+    hop3:Optional[int]=Field(default=0,foreign_key="sgw.id")
+    hop4:Optional[int]=Field(default=0,foreign_key="sgw.id")
+    hop5:Optional[int]=Field(default=0,foreign_key="sgw.id")
 
 sqlite_file=Path(__file__).parent.parent/"database.db"
 sqlite_url = f"sqlite:///{sqlite_file}"

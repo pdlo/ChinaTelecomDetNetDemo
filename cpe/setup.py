@@ -61,26 +61,56 @@ def clear_all(verbose=True, batching=True):
     
 clear_all()
 
+
 #ipv4转发
 #ipv4_lpm = p4.Ingress.ipv4_lpm
+
+#srv6处理,插入路径
+select_srv6_path = p4.Ingress.select_srv6_path
+"""
+key = {
+           <32> hdr.ipv4.dst_addr: exact;   //目的ipv4
+           <16> hdr.tcp.dst_port: exact;   //目的tcp端口
+            <8> meta.trafficclass: exact;   //流等级       
+        }
+bit<8> num_segments, bit<8> last_entry,
+        bit<48> src_mac, bit<48> dst_mac, bit<9> port, 
+        bit<128> s1, bit<128> s2, bit<128> s3, bit<128> s4, bit<128> s5
+"""
+
+#srv6头部丢弃和ipv4转发
+srv6_drop = p4.Ingress.srv6_drop
+"""
+key = {
+         <31>   hdr.ipv4.dst_addr: lpm;
+        }
+bit<48> src_mac, bit<48> dst_mac, bit<9> port
+"""
+
+#获取流表
+select_traffic_class = p4.Ingress.select_traffic_class
+"""
+key = {
+          <32>  hdr.ipv4.dst_addr: exact;
+          <32>  hdr.ipv4.src_addr: exact;
+          <16>  hdr.tcp.dst_port: exact;
+        }
+bit<8> trafficclass
+"""
+
+
+#流等级
+select_traffic_class.add_with_get_traffic_class(dst_addr=0x0a99a202, src_addr=0x0a99b602, dst_port=0x0002, trafficclass=0x01)
+#select_traffic_class.add_with_get_traffic_class(dst_addr=0x0a99a202, dst_addr_p_length=32, trafficclass=0x2)
+
+
 #srv6处理
-insert_srv6 = p4.Ingress.insert_srv6
+select_srv6_path.add_with_srv6_insert(dst_addr=0x0a99b602, dst_port=0x0002, trafficclass=0x01,num_segments=0x03, last_entry=0x02, src_mac=0x000001533364, dst_mac=0x000001523364, port=64, s1=0x1, s2=0x2, s3=0x3, s4=0x4, s5=0x5)
+
+
 #srv6头部丢弃
-#srv6_abandon = p4.Ingress.srv6_abandon
-
-# 这里负责转发
-# 将数据包从交换机端口140转发给10.153.182.2（mac地址为0xa0:36:9f:ed:55:62），端口172
-#ipv4_lpm.add_with_ipv4_forward(dst_addr=0x0a99b602, dst_addr_p_length=32,src_mac=0x000000153182, dst_mac=0xa0369fed5562, port=172)
-# 将数据包从交换机端口156转发给10.153.162.2（mac地址为0xe8:61:1f:37:b6:d3），端口156
-#ipv4_lpm.add_with_ipv4_forward(dst_addr=0x0a99a202, dst_addr_p_length=32,src_mac=0x000000153162, dst_mac=0xe8611f37b6d3, port=156)
-
-#srv6处理
-#ipv4包插入
-#insert_srv6.add_with_srv6_insert(ether_type=0x0800, num_segments=0x05, s1=0x0a080002111111112222222233333333, s2=0x0a080002111111112222222233333333, s3=0x0a080002111111112222222233333333, s4=0x0a080002111111112222222233333333, s5=0x0a080002111111112222222233333333)
-insert_srv6.add_with_srv6_insert(dst_addr=0x0a99b602, dst_addr_p_length=32, num_segments=0x05 ,src_mac=0x000000153182, dst_mac=0xa0369fed5562, port=172, s1=0x1, s2=0x2, s3=0x3, s4=0x4, s5=0x5)
-insert_srv6.add_with_srv6_insert(dst_addr=0x0a99a202, dst_addr_p_length=32, num_segments=0x05, src_mac=0x000000153162, dst_mac=0xe8611f37b6d3, port=156, s1=0x1, s2=0x2, s3=0x3, s4=0x4, s5=0x5)
-#INT包插入
-#insert_srv6.add_with_srv6_insert(ether_type=0x0812, num_segments=0x05, s1=0x000181, s2=0x000182, s3=0x000183, s4=0x000184, s5=0x000185)
+srv6_drop.add_with_ipv4_forward(dst_addr=0x0a99a202, dst_addr_p_length=32, src_mac=0x000001533364, dst_mac=0x000001523364, port=156)
+srv6_drop.add_with_ipv4_forward(dst_addr=0x0a99b602, dst_addr_p_length=32, src_mac=0x000015204156, dst_mac=0xa0369fed5562, port=64)
 
 
 
@@ -90,8 +120,10 @@ bfrt.complete_operations()
 print("""
 ******************* PROGAMMING RESULTS *****************
 """)
-print ("Table ipv4_lpm:")
-#ipv4_lpm.dump(table=True)
-print ("Table insert_srv6:")
-insert_srv6.dump(table=True)
+print ("Table select_srv6_path:")
+select_srv6_path.dump(table=True)
+print ("Table srv6_drop:")
+srv6_drop.dump(table=True)
+print ("Table select_traffic_ckass:")
+select_traffic_class.dump(table=True)
                        

@@ -366,7 +366,7 @@ control MyIngress(inout headers hdr,
 
     table swid {
         key = {
-           hdr.ethernet.etherType: exact;       
+           hdr.ethernet.etherType: exact;       //为swid表添加了对应的键，方便在实体机上运行
         }
         actions = {
             set_swid;

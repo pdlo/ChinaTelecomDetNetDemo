@@ -365,6 +365,9 @@ control MyIngress(inout headers hdr,
     }
 
     table swid {
+        key = {
+           hdr.ethernet.etherType: exact;       
+        }
         actions = {
             set_swid;
             NoAction;

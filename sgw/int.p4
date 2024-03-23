@@ -1,5 +1,4 @@
-//交换机的P4代码，支持INT和SRV6转发
-/* -*- P4_16 -*- */                
+/* -*- P4_16 -*- */
 #include <core.p4>
 #include <v1model.p4>
 
@@ -138,29 +137,17 @@ parser MyParser(packet_in packet,
     state parse_srv6 {
         packet.extract(hdr.srv6h);  //这里需要有判断segment list个数的方法
         //meta.last_entry = hdr.srv6h.last_entry; //判断segment list个数的方法
-        //meta.segment_left = hdr.srv6h.segment_left; //剩余跳数，用这个值来判断是否丢弃srv6头部
+        meta.segment_left = hdr.srv6h.segment_left; //剩余跳数，用这个值来判断是否丢弃srv6头部
         transition parse_srv6_list_1;
     }
     state parse_srv6_list_1 {
         packet.extract(hdr.srv6_list.next); //提取segment list的栈的第一个元素,循环解析srv6list，确保不丢失数据
-        transition parse_srv6_list_2;       //得到以太网+ipv6+srv6h+srv6list+ipv4
+        meta.segment_left=meta.segment_left-1;
+		transition select(meta.segment_left){
+     		0:parse_middle;
+			default:parse_srv6_list_1;
+		} //得到以太网+ipv6+srv6h+srv6list+ipv4
                          
-    }
-    state parse_srv6_list_2{
-        packet.extract(hdr.srv6_list.next);
-        transition parse_srv6_list_3;
-    }
-    state parse_srv6_list_3{
-        packet.extract(hdr.srv6_list.next);
-        transition parse_srv6_list_4;
-    }
-    state parse_srv6_list_4{
-        packet.extract(hdr.srv6_list.next);
-        transition parse_srv6_list_5;
-    }
-    state parse_srv6_list_5{
-        packet.extract(hdr.srv6_list.next);
-        transition parse_middle;
     }
     state parse_probe {
         packet.extract(hdr.probe_header);
@@ -290,8 +277,9 @@ control MyIngress(inout headers hdr,
     action srv6_forward() {
         hdr.srv6h.segment_left = hdr.srv6h.segment_left - 1;
         hdr.ipv6.dst_addr = hdr.srv6_list[0].segment_id;
+	hdr.srv6h.last_entry=hdr.srv6h.segment_left - 1;
         hdr.srv6_list.pop_front(1);
-        hdr.srv6_list[4].setValid();
+       // hdr.srv6_list[4].setValid();
         //hdr.srv6_list[4] = 0;
     }
     table ipv6_lpm {
@@ -365,8 +353,8 @@ control MyIngress(inout headers hdr,
     }
 
     table swid {
-        key = {
-           hdr.ethernet.etherType: exact;       //为swid表添加了对应的键，方便在实体机上运行
+    	key = {
+           hdr.ethernet.etherType: exact;       //第一个交换机中用，写一条流表项，键分别是INT的以太网类型/////change!!!!!!
         }
         actions = {
             set_swid;

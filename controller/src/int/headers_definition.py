@@ -1,4 +1,4 @@
-from scapy.all import Packet,ByteField,BitField,IntField,IP6Field,bind_layers
+from scapy.all import Packet,ByteField,BitField,IntField,IP6Field,bind_layers,Ether,IPv6
 
 TYPE_PROBE = 0x0812
 TYPE_IPV6 = 0x86dd

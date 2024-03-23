@@ -4,7 +4,7 @@ from datetime import datetime
 from scapy.all import sniff, get_if_list
 from sqlmodel import SQLModel, Session, select, create_engine
 from headers_definition import probe_data
-from src.orm import SgwLink,SgwLinkState,engine
+from orm import SgwLink,SgwLinkState,engine
 from sqlmodel import select as sql_select
 
 # 创建数据库引擎，这里的 DATABASE_URI 应该替换为实际的数据库 URI

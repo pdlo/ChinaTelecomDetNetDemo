@@ -72,7 +72,8 @@ class Host(SQLModel, table=True):
     """
     id: Optional[int] = Field(default=None, primary_key=True)
     name:str
-    ip: str
+    ip : str
+    mac : str
     cpe_id:int = Field(foreign_key="cpe.id",description="入网cpe")
 
 class Business(SQLModel, table=True):

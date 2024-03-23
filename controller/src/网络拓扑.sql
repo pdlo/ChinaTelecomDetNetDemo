@@ -16,16 +16,6 @@ INSERT INTO "sgwinterface" ("id", "name", "sgw_id", "bmv2_port") VALUES (10, 'et
 INSERT INTO "sgwinterface" ("id", "name", "sgw_id", "bmv2_port") VALUES (11, 'ens2f2', 4, 2);
 INSERT INTO "sgwinterface" ("id", "name", "sgw_id", "bmv2_port") VALUES (12, 'ens1f3', 4, 3);
 
-INSERT INTO "sgwlink" ("id", "sgw_id_1", "interface_id_1", "sgw_id_2", "interface_id_2") VALUES (1, 1, 1, 2, 5);
-INSERT INTO "sgwlink" ("id", "sgw_id_1", "interface_id_1", "sgw_id_2", "interface_id_2") VALUES (2, 1, 2, 4, 11);
-INSERT INTO "sgwlink" ("id", "sgw_id_1", "interface_id_1", "sgw_id_2", "interface_id_2") VALUES (3, 2, 6, 3, 8);
-INSERT INTO "sgwlink" ("id", "sgw_id_1", "interface_id_1", "sgw_id_2", "interface_id_2") VALUES (4, 3, 7, 4, 10);
-INSERT INTO "sgwlink" ("id", "sgw_id_1", "interface_id_1", "sgw_id_2", "interface_id_2") VALUES (5, 2, 5, 1, 1);
-INSERT INTO "sgwlink" ("id", "sgw_id_1", "interface_id_1", "sgw_id_2", "interface_id_2") VALUES (6, 4, 11, 1, 2);
-INSERT INTO "sgwlink" ("id", "sgw_id_1", "interface_id_1", "sgw_id_2", "interface_id_2") VALUES (7, 3, 8, 2, 6);
-INSERT INTO "sgwlink" ("id", "sgw_id_1", "interface_id_1", "sgw_id_2", "interface_id_2") VALUES (8, 4, 10, 3, 7);
-
-
 /*cpe对应的端口号还未确定，确定后需要更改*/
 INSERT INTO "cpe" ("id", "name", "console_ip", "connect_sgw","port_to_sgw", "srv6_locator") VALUES (1, '151', '219.242.112.215:6151', 1, 172,'0000:0151');
 INSERT INTO "cpe" ("id", "name", "console_ip", "connect_sgw","port_to_sgw", "srv6_locator") VALUES (2, '152', '219.242.112.215:6152', 3, 172,'0000:0152');
@@ -44,6 +34,15 @@ INSERT INTO "route" ("id", "src_cpe_id", "dst_cpe_id", "tos", "route") VALUES (1
 INSERT INTO "route" ("id", "src_cpe_id", "dst_cpe_id", "tos", "route") VALUES (11, 3, 2, 0, '4,1,2,3');
 INSERT INTO "route" ("id", "src_cpe_id", "dst_cpe_id", "tos", "route") VALUES (12, 3, 2, 1, '4,3');
 
-INSERT INTO "host" ("id", "name", "ip", "cpe_id") VALUES (1, '162', '10.151.162.2', 1);
-INSERT INTO "host" ("id", "name", "ip", "cpe_id") VALUES (2, '166', '10.152.166.2', 2);
-INSERT INTO "host" ("id", "name", "ip", "cpe_id") VALUES (3, '168', '10.153.168.2', 3);
+INSERT INTO "host" ("id", "name", "ip", "mac", "cpe_id") VALUES (1, '162', '10.151.162.2', 'b8:ce:f6:9c:24:be', 1);
+INSERT INTO "host" ("id", "name", "ip", "mac", "cpe_id") VALUES (2, '166', '10.152.166.2', 'b8:ce:f6:9c:18:a2', 2);
+INSERT INTO "host" ("id", "name", "ip", "mac", "cpe_id") VALUES (3, '168', '10.153.168.2', 'b8:ce:f6:9c:26:62', 3);
+
+INSERT INTO "sgwlink" ("id", "src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (1, 1,1,2,1);
+INSERT INTO "sgwlink" ("id", "src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (2, 1,2,4,2);
+INSERT INTO "sgwlink" ("id", "src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (3, 2,2,3,2);
+INSERT INTO "sgwlink" ("id", "src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (4, 3,1,4,1);
+INSERT INTO "sgwlink" ("id", "src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (5, 2,1,1,1);
+INSERT INTO "sgwlink" ("id", "src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (6, 4,2,1,2);
+INSERT INTO "sgwlink" ("id", "src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (7, 3,2,2,2);
+INSERT INTO "sgwlink" ("id", "src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (8, 4,1,3,1);

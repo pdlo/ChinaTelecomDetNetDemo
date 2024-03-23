@@ -8,7 +8,7 @@ from src.orm import SgwLink,SgwLinkState,engine
 from sqlmodel import select as sql_select
 
 # 创建数据库引擎，这里的 DATABASE_URI 应该替换为实际的数据库 URI
-DATABASE_URI = 'sqlite:///database.db'
+#DATABASE_URI = 'sqlite:///database.db'
 #engine = create_engine(DATABASE_URI)
 
 # 请确保在启动脚本之前数据库模型已经创建

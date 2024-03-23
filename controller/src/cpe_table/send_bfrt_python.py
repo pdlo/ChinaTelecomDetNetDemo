@@ -29,6 +29,7 @@ def send(cpe:orm.Cpe,code:str) -> str:
     code_file_path = CODE_PATH/f"{uuid.uuid4()}.py"
     c.put(StringIO(code),str(code_file_path))
     result:Result = c.run(f'bash /root/bf-sde-9.1.0/run_bfshell.sh -b {code_file_path}',env=tofino_env,hide=True)
+    # c.run(f"rm {code_file_path}")
     c.close()
     if len(result.stdout)>0:
         raise Exception(f"命令运行报错:\n{result.stdout}")

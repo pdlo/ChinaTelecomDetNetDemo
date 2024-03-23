@@ -5,7 +5,7 @@
 
 ### srv6 sid
 1. SRv6 SID是一个128bit的值，为IPv6地址形式，由Locator、Function和Arguments三部分组成。
-1. 我们将前64位作为locator，标记一个srv6转发结点，即sgw。
+1. 我们将前32位作为locator，标记一个srv6转发结点，即sgw。
 1. 在数据库和代码中，使用类似A114:0514的格式存储一个locator，即8个0~A，中间用冒号分割
 1. 默认使用设备号，例如181的locator就是0000:0181
 

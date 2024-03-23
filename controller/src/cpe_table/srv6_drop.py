@@ -4,7 +4,7 @@ from src.cpe_table.utils import ip_to_hex,VIRTUAL_MAC
 from src.cpe_table.send_bfrt_python import send
 from src import orm
 
-def add_with_get_traffic_class(
+def add_with_ipv4_forward(
     cpe:orm.Cpe,
     *,
     dst_ip:str,

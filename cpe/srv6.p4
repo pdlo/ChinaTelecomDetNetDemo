@@ -315,13 +315,28 @@ control Ingress(
         meta.s5 = s5;
 
     }
-    table select_srv6_path {      
+
+    //付费用户
+    table select_srv6_path {
         //插入srv6头部
         key = {
             hdr.ipv4.dst_addr: exact;   //目的ipv4
             hdr.ipv4.src_addr: exact;   //源ipv4
-            //hdr.tcp.dst_port: exact;   //目的tcp端口,感觉这个约束之前有了，现在不需要
+            hdr.tcp.dst_port: exact;   
             meta.trafficclass: exact;   //流等级       
+        }
+        actions = {
+            srv6_insert();
+            drop();
+        }
+        default_action = drop();   
+    }
+
+    //未付费用户
+    table select_srv6_path_without_qos{
+        //插入srv6头部
+        key = {
+            hdr.ipv4.dst_addr: lpm;   //目的ipv4
         }
         actions = {
             srv6_insert();
@@ -419,7 +434,12 @@ control Ingress(
 
                 select_traffic_class.apply();
 
-                select_srv6_path.apply();
+                if(meta.trafficclass==0){
+                    select_srv6_path_without_qos.apply();
+                }
+                else{
+                    select_srv6_path.apply();
+                }
 
                 if (meta.num_segments == 1) {
                     hdr.srv6_list[0].setValid();

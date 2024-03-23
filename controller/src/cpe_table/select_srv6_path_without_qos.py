@@ -8,10 +8,8 @@ from src import orm
 def add_with_srv6_insert(
     cpe:orm.Cpe,
     *,
-    src_ip:str,
     dst_ip:str,
-    dst_port:int,
-    tos:int,
+    dst_mask:int=32,
     src_mac:str=VIRTUAL_MAC,
     dst_mac:str=VIRTUAL_MAC,
     route_str:str,
@@ -27,18 +25,14 @@ def add_with_srv6_insert(
 table=bfrt.srv6.pipe.Ingress.select_srv6_path
 try:
     table.delete(
-        src_addr={ip_to_hex(src_ip)}
         dst_addr={ip_to_hex(dst_ip)},
-        dst_port={dst_port},
-        trafficclass={tos},
+        dst_addr_p_length={dst_mask},
     )
 except:
     pass
 table.add_with_srv6_insert(
-    src_addr={ip_to_hex(src_ip)}
     dst_addr={ip_to_hex(dst_ip)},
-    dst_port={dst_port},
-    trafficclass={tos},
+    dst_addr_p_length={dst_mask}, 
     num_segments={num_segments},
     last_entry={num_segments-1},
     src_mac={mac_to_hex(src_mac)},
@@ -55,3 +49,4 @@ table.dump()
     if send_code:
         send(cpe,code)
     return code
+

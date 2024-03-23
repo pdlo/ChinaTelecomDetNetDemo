@@ -3,7 +3,7 @@ import sys
 from datetime import datetime
 from scapy.all import sniff, get_if_list
 from sqlmodel import SQLModel, Session, select, create_engine
-from headers_definition import probe_data
+from src.int.headers_definition import probe_data
 from src.orm import SgwLink,SgwLinkState,engine
 from sqlmodel import select as sql_select
 

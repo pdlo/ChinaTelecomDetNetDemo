@@ -54,14 +54,13 @@ def handle_pkt(pkt):
                 egress_port_2 = probe_data_layers[i - 1].egress_port
 
                 statement = sql_select(SgwLink).where(
-                    (SgwLink.sgw_id_1 == swid_1) &
-                    (SgwLink.interface_id_1 == egress_port_1) &
-                    (SgwLink.sgw_id_2 == swid_2) &
-                    (SgwLink.interface_id_2 == egress_port_2)
+                    (SgwLink.src_sgw_id == swid_1) &
+                    (SgwLink.src_bmv2_port == egress_port_1) &
+                    (SgwLink.dst_sgw_id == swid_2) &
+                    (SgwLink.dst_bmv2_port == egress_port_2)
                 )
                 sgw_link = session.exec(statement).first()
-
-                if sgw_link:
+                if sgw_link and sgw_link.id:#避免静态类型检查器报错
                     link_state = SgwLinkState(
                         link_id=sgw_link.id,
                         create_datetime=datetime.now(),

@@ -25,8 +25,8 @@ def get_link_states()->List[CurrentLinkState]:
         quary = (
             select(
                 SgwLink.id,
-                SgwLink.sgw_id_1,
-                SgwLink.sgw_id_2,
+                SgwLink.src_sgw_id,
+                SgwLink.dst_sgw_id,
                 subquary.c.delay,
                 subquary.c.rate,# type: ignore
                 subquary.c.lost,
@@ -44,7 +44,7 @@ def get_link_states()->List[CurrentLinkState]:
 def static(connections:Sequence[CurrentLinkState],businesses:Sequence[Business]) -> List[Route]:
     print(connections,businesses)
     routes = [
-        Route(business_id=1,create_datetime=datetime.now(),route="1,2,3,4,5")
+        # Route(business_id=1,create_datetime=datetime.now(),route="1,2,3,4,5")
     ]
     return routes
 

@@ -7,7 +7,7 @@ from sqlmodel import Field, SQLModel, create_engine  #, Relationship  暂时不�
 from pathlib import Path
 from datetime import datetime
 
-__all__=['Sgw','SgwInterface','SgwLink','SgwLinkState','Cpe','Business','Route','engine']
+__all__=['Sgw','SgwInterface','SgwLink','SgwLinkState','Cpe','Host','Business','Route','engine']
 
 class Sgw(SQLModel, table=True):
     """
@@ -36,10 +36,10 @@ class SgwLink(SQLModel, table=True):
     连接有方向（因为int）。两个sgw之间需要添加两个连接。
     """
     id: Optional[int] = Field(default=None, primary_key=True)
-    sgw_id_1:int = Field(foreign_key="sgw.id")
-    interface_id_1:int  = Field(foreign_key="sgwinterface.id")
-    sgw_id_2:int = Field(foreign_key="sgw.id")
-    interface_id_2:int = Field(foreign_key="sgwinterface.id")
+    src_sgw_id:int = Field(foreign_key="sgw.id")
+    src_bmv2_port:int
+    dst_sgw_id:int = Field(foreign_key="sgw.id")
+    dst_bmv2_port:int
 
 class SgwLinkState(SQLModel, table=True):
     """

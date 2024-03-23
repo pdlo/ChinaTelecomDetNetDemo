@@ -12,7 +12,7 @@ from sqlmodel import select as sql_select
 #engine = create_engine(DATABASE_URI)
 
 # 请确保在启动脚本之前数据库模型已经创建
-SQLModel.metadata.create_all(engine)
+#SQLModel.metadata.create_all(engine)
 
 def get_if():
     ifs = get_if_list()

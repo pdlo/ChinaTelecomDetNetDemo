@@ -100,17 +100,56 @@ bit<8> trafficclass
 
 
 #流等级
-select_traffic_class.add_with_get_traffic_class(dst_addr=0x0a99a202, src_addr=0x0a99b602, dst_port=0x0002, trafficclass=0x01)
+#10.153.162.2  0a99a202  
+#10.152.166.2  0a98a602
+#10.151.168.2  0a97a802
+select_traffic_class.add_with_get_traffic_class(dst_addr="10.152.166.2", src_addr="10.153.162.2", dst_port=1233, trafficclass=0x01)
+#10.153.162.2  10.151.168.2
+#select_traffic_class.add_with_get_traffic_class(dst_addr=0x0a97a802, src_addr=0x0a99a202, dst_port=0x04d2, trafficclass=0x01)
 #select_traffic_class.add_with_get_traffic_class(dst_addr=0x0a99a202, dst_addr_p_length=32, trafficclass=0x2)
 
 
 #srv6处理
-select_srv6_path.add_with_srv6_insert(dst_addr=0x0a99b602, dst_port=0x0002, trafficclass=0x01,num_segments=0x03, last_entry=0x02, src_mac=0x000001533364, dst_mac=0x000001523364, port=64, s1=0x1, s2=0x2, s3=0x3, s4=0x4, s5=0x5)
+#10.152.166.2
+"""
+select_srv6_path.add_with_srv6_insert(dst_addr=0x0a98a602, num_segments=0x02, last_entry=0x01, src_mac=0x000015304156, dst_mac=0x000015204182, port=156, 
+s1=0x00000187000000000000000000000000, 
+s2=0x00000152000000000000000000000000, 
+s3=0x00000152000000000000000000000000, 
+s4=0x00000152000000000000000000000000, 
+s5=0x00000183000000000000000000000000)
+"""
 
+select_srv6_path.add_with_srv6_insert(dst_addr="10.152.166.2", src_addr="10.153.162.2", trafficclass=0x00, num_segments=0x04, last_entry=0x03, src_mac=0x000015304156, dst_mac=0x000015204182, port=156, 
+s1=0x00000183000000000000000000000000, 
+s2=0x00000185000000000000000000000000, 
+s3=0x00000187000000000000000000000000, 
+s4=0x00000152000000000000000000000000, 
+s5=0x00000183000000000000000000000000)
+
+
+select_srv6_path.add_with_srv6_insert(dst_addr="10.152.166.2", src_addr="10.153.162.2", trafficclass=0x01, num_segments=0x02, last_entry=0x01, src_mac=0x000015304156, dst_mac=0x000015204182, port=156, 
+s1=0x00000187000000000000000000000000, 
+s2=0x00000152000000000000000000000000, 
+s3=0x00000187000000000000000000000000, 
+s4=0x00000152000000000000000000000000, 
+s5=0x00000183000000000000000000000000)
+
+
+select_srv6_path.add_with_srv6_insert(dst_addr="10.151.168.2", src_addr="10.153.162.2", trafficclass=0x01, num_segments=0x02, last_entry=0x01, src_mac=0x000015304156, dst_mac=0x000015204182, port=156, 
+s1=0x00000187000000000000000000000000, 
+s2=0x00000152000000000000000000000000, 
+s3=0x00000187000000000000000000000000, 
+s4=0x00000152000000000000000000000000, 
+s5=0x00000183000000000000000000000000)
+
+
+#10.151.168.2
+#select_srv6_path.add_with_srv6_insert(dst_addr=0x0a99b802, dst_port=0x0002, trafficclass=0x01,num_segments=0x04, last_entry=0x03, src_mac=0x000015304156, dst_mac=0x000015204182, port=156, s1=0x1, s2=0x2, s3=0x3, s4=0x4, s5=0x5)
 
 #srv6头部丢弃
-srv6_drop.add_with_ipv4_forward(dst_addr=0x0a99a202, dst_addr_p_length=32, src_mac=0x000001533364, dst_mac=0x000001523364, port=156)
-srv6_drop.add_with_ipv4_forward(dst_addr=0x0a99b602, dst_addr_p_length=32, src_mac=0x000015204156, dst_mac=0xa0369fed5562, port=64)
+srv6_drop.add_with_ipv4_forward(dst_addr="10.153.162.2", dst_addr_p_length=32, src_mac=0x000001533364, dst_mac=0xb8cef69c24be, port=64)
+#srv6_drop.add_with_ipv4_forward(dst_addr=0x0a99b602, dst_addr_p_length=32, src_mac=0x000015204156, dst_mac=0xa0369fed5562, port=64)
 
 
 

@@ -319,7 +319,8 @@ control Ingress(
         //插入srv6头部
         key = {
             hdr.ipv4.dst_addr: exact;   //目的ipv4
-            hdr.tcp.dst_port: exact;   //目的tcp端口
+            hdr.ipv4.src_addr: exact;   //源ipv4
+            //hdr.tcp.dst_port: exact;   //目的tcp端口,感觉这个约束之前有了，现在不需要
             meta.trafficclass: exact;   //流等级       
         }
         actions = {
@@ -415,8 +416,11 @@ control Ingress(
         }
         else {
             if (hdr.ipv4.isValid()){
+
                 select_traffic_class.apply();
+
                 select_srv6_path.apply();
+
                 if (meta.num_segments == 1) {
                     hdr.srv6_list[0].setValid();
                     hdr.srv6_list[0].segment_id = meta.s1;

@@ -23,16 +23,17 @@ for i in hosts:
         dst_mac=i.mac,
         bmv2_port=i.cpe_bmv2_port)
 
-#对于route表的每一行，下发select_srv6_path_without_qos
+#对于route表的每一行，下发select_srv6_path
 routes = hosts=session.exec(select(Route)).all()
 for i in routes:
     src_cpe = session.exec(select(Cpe).where(Cpe.id==i.src_cpe_id)).one()
     dst_cpe = session.exec(select(Cpe).where(Cpe.id==i.dst_cpe_id)).one()
-    cpe_table.select_srv6_path_without_qos.add_with_srv6_insert(
+    cpe_table.select_srv6_path.add_with_srv6_insert(
         src_cpe,
         dst_ip=dst_cpe.subnet_ip,
         dst_mask=dst_cpe.subnet_mask,
-        route_str=i.route
+        qos=i.qos,
+        route_str=i.route,
     )
 
 session.close()

@@ -2,13 +2,13 @@
 1. 每隔一定时间运行一次
 2. 读取每一跳的时延带宽丢包率
 3. 计算三个路由,向cpe下发路由表
+考虑到目前没有算法，并且希望演示效果更直观，在目前的系统中，不会使用此程序
 """
-
 from datetime import datetime,timedelta
 from src.schedule.get_routing import get_routings
-from src.schedule.update_table import update_table
-from src.schedule.util import config,logger
+from src.schedule.util import logger
 from src.schedule.setup import setup
+from src.config import config
 
 if __name__!="__main__":
     raise Exception("试图import此代码")
@@ -24,7 +24,7 @@ try:
         last_schedule_time=now_time
         routings = get_routings()
         for route in routings:
-            update_table(route)
+            pass
         logger.info(f"已下发流表")
 except KeyboardInterrupt:
     logger.info("已停止调度程序")

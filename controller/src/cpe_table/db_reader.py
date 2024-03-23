@@ -2,7 +2,6 @@ from src import orm
 
 from sqlmodel import select,Session
 
-
 session=Session(orm.engine)
 
 def get_cpe_by_id(cpe_id:int)->orm.Cpe:
@@ -10,6 +9,10 @@ def get_cpe_by_id(cpe_id:int)->orm.Cpe:
     return session.exec(statement).one()
 
 def get_sgw_locator_by_id(sgw_id:int)->int:
+    """
+    根据id获取sgw_locator。如果id不存在则返回0。
+    locator使用16进制(相比数据库中的表示去掉了中间的冒号)，例如A114F514
+    """
     statement = select(orm.Sgw.srv6_locator).where(orm.Sgw.id==sgw_id)
     locator = session.exec(statement).one_or_none()
     if locator is None:
@@ -18,6 +21,10 @@ def get_sgw_locator_by_id(sgw_id:int)->int:
     return int(locator,base=16)
 
 def get_sgw_locator_by_host_ip(ip:str)->int:
+    """
+    根据ip地址获取对应主机的入网sgw_locator。
+    locator使用16进制(相比数据库中的表示去掉了中间的冒号)，例如A114F514
+    """
     statement = select(orm.Host.cpe_id).where(orm.Host.ip==ip)
     cpe_id=session.exec(statement).one()
     statement = select(orm.Cpe.connect_sgw).where(orm.Cpe.id==cpe_id)

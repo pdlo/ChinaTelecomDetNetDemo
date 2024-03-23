@@ -1,17 +1,21 @@
 from datetime import datetime
 
 from src.cpe_table.utils import ip_to_hex,VIRTUAL_MAC
-from src.cpe_table.send_bfrt_python import send
+from src.cpe_table.send_bfrt_python import send 
 from src.cpe_table import db_reader
 from src import orm
 
 def add_with_srv6_insert(
     cpe:orm.Cpe,
+    *,
     dst_ip:str,
     dst_port:int,
     tos:int,
+    src_mac:str=VIRTUAL_MAC,
+    dst_mac:str=VIRTUAL_MAC,
     route_str:str,
-) -> None:
+    send_code:bool=True
+) -> str:
     route_list=[int(i) for i in route_str.split(',')]
     route_list.append(db_reader.get_sgw_locator_by_host_ip(dst_ip))
     num_segments=len(route_list)
@@ -34,8 +38,8 @@ table.add_with_srv6_insert(
     trafficclass={tos},
     num_segments={num_segments},
     last_entry={num_segments-1},
-    src_mac={VIRTUAL_MAC},
-    dst_mac={VIRTUAL_MAC},
+    src_mac={src_mac},
+    dst_mac={dst_mac},
     port={cpe.port_to_sgw},
     s1={db_reader.get_sgw_locator_by_id(route_list[0])},
     s2={db_reader.get_sgw_locator_by_id(route_list[1])},
@@ -45,5 +49,6 @@ table.add_with_srv6_insert(
 )
 table.dump()
     """
-    print(code)
-    send(cpe,code)
+    if send_code:
+        send(cpe,code)
+    return code

@@ -144,11 +144,12 @@ struct ingress_metadata_t {
     /***********************  P A R S E R  **************************/
 
 parser IngressParser(packet_in pkt,
-        /* User */    
-        out my_ingress_headers_t hdr,
-        out ingress_metadata_t meta,
-        /* Intrinsic */
-        out ingress_intrinsic_metadata_t ig_intr_md){
+    /* User */    
+    out my_ingress_headers_t hdr,
+    out ingress_metadata_t meta,
+    /* Intrinsic */
+    out ingress_intrinsic_metadata_t ig_intr_md)
+{
     state start {
         meta = {0,0,0,0,0,0,0};
         pkt.extract(ig_intr_md);
@@ -252,9 +253,7 @@ parser IngressParser(packet_in pkt,
     }
 }
 
-    
-
-    /***************** M A T C H - A C T I O N  *********************/
+/***************** M A T C H - A C T I O N  *********************/
 
 control Ingress( 
     /* User */
@@ -270,8 +269,25 @@ control Ingress(
         ig_intr_dprsr_md.drop_ctl = 1;
     }
 
+    //----------------------------------------服务等级映射------------------------------------------------------
+    action get_traffic_class(bit<8> trafficclass) {
+        //根据流表下发的等级来判断,默认为0，如果有流表，则等级为1
+        meta.trafficclass = trafficclass; 
+    }
 
-//---------------------------------------ipv6和srv6插入-----------------------------------------------
+    table select_traffic_class{
+        key = {
+            hdr.ipv4.dst_addr: exact;
+            hdr.ipv4.src_addr: exact;
+            hdr.tcp.dst_port: exact;
+        }
+        actions = {
+            get_traffic_class();
+        }
+        default_action = get_traffic_class(0);
+    }
+
+    //---------------------------------------ipv6和srv6插入-----------------------------------------------
     action srv6_insert(bit<8> num_segments, bit<8> last_entry,
         bit<48> src_mac, bit<48> dst_mac, bit<9> port, 
         bit<128> s1, bit<128> s2, bit<128> s3, bit<128> s4, bit<128> s5){
@@ -315,12 +331,17 @@ control Ingress(
         meta.s5 = s5;
 
     }
-    table select_srv6_path {      
+
+    table select_srv6_path {
         //插入srv6头部
         key = {
+<<<<<<< HEAD
             hdr.ipv4.dst_addr: exact;   //目的ipv4
             //hdr.ipv4.src_addr: exact;   //源ipv4
             //hdr.tcp.dst_port: exact;   //目的tcp端口,感觉这个约束之前有了，现在不需要
+=======
+            hdr.ipv4.dst_addr: lpm;   //目的ipv4
+>>>>>>> 98c06aa42dd5bf6252ee0d48aebeaf5948321527
             meta.trafficclass: exact;   //流等级       
         }
         actions = {
@@ -329,8 +350,7 @@ control Ingress(
         }
         default_action = drop();   
     }
-
-//---------------------------------------srv6丢弃-----------------------------------------------  
+    //---------------------------------------srv6丢弃-----------------------------------------------  
 
     action ipv4_forward(bit<48> src_mac, bit<48> dst_mac, bit<9> port) {
         //ipv4转发
@@ -351,47 +371,11 @@ control Ingress(
         default_action = drop();
     }
 
-    //----------------------------------------服务等级映射------------------------------------------------------
-    action get_traffic_class(bit<8> trafficclass) {
-        //根据流表下发的等级来判断,默认为0，如果有流表，则等级为1
-        meta.trafficclass = trafficclass; 
-    }
-
-    table select_traffic_class{
-        key = {
-            hdr.ipv4.dst_addr: exact;
-            hdr.ipv4.src_addr: exact;
-            hdr.tcp.dst_port: exact;
-        }
-        actions = {
-            get_traffic_class();
-        }
-        default_action = get_traffic_class(0);
-    }
-
-    //---------------------------------------srv6路径映射------------------------------------------------------
-   
-    
     //------------------------------------------------------------------------------------------------------
     //                                            apply
     //--------------------------------------------------------------------------------------------------------
     apply {
         if (hdr.arp.isValid()) {
-            //10.153.182.2   0x0a99a202
-            /*
-            if (hdr.arp.target_ip == 0x0a99b602) {
-                    //ask who is 10.153.182.2
-                    hdr.ethernet.dstAddr = hdr.ethernet.srcAddr;
-                    hdr.ethernet.srcAddr = 0x000015304156;
-                    hdr.arp.OPER = 2;
-                    hdr.arp.target_ha = hdr.arp.sender_ha;
-                    hdr.arp.target_ip = hdr.arp.sender_ip;
-                    hdr.arp.sender_ip = 0x0a99b602;
-                    hdr.arp.sender_ha = 0x000015304156;
-                    ig_intr_tm_md.ucast_egress_port = ig_intr_md.ingress_port;
-                }
-              */  
-            
             hdr.ethernet.dstAddr = hdr.ethernet.srcAddr;
             hdr.ethernet.srcAddr = VIRTUAL_MAC;
             hdr.arp.OPER = 2;
@@ -418,7 +402,6 @@ control Ingress(
             if (hdr.ipv4.isValid()){
 
                 select_traffic_class.apply();
-
                 select_srv6_path.apply();
 
                 if (meta.num_segments == 1) {
@@ -479,9 +462,8 @@ control Ingress(
                 }              
             }          
         }
-           
-            }
-        }
+    }
+}
     
 
 
@@ -523,11 +505,11 @@ struct egress_metadata_t {
     /***********************  P A R S E R  **************************/
 
 parser EgressParser(packet_in pkt,
-     /* User */
-     out my_egress_headers_t hdr,
-     out egress_metadata_t meta,
-     /* Intrinsic */
-     out egress_intrinsic_metadata_t eg_intr_md)
+    /* User */
+    out my_egress_headers_t hdr,
+    out egress_metadata_t meta,
+    /* Intrinsic */
+    out egress_intrinsic_metadata_t eg_intr_md)
 {
     state start {
         pkt.extract(eg_intr_md);
@@ -539,13 +521,13 @@ parser EgressParser(packet_in pkt,
 
 control Egress(
          /* User */
-         inout my_egress_headers_t hdr,
-         inout egress_metadata_t meta,
-         /* Intrinsic */    
-         in egress_intrinsic_metadata_t eg_intr_md,
-         in egress_intrinsic_metadata_from_parser_t eg_intr_prsr_md,
-         inout egress_intrinsic_metadata_for_deparser_t eg_intr_dprsr_md,
-         inout egress_intrinsic_metadata_for_output_port_t eg_intr_tm_md)
+    inout my_egress_headers_t hdr,
+    inout egress_metadata_t meta,
+    /* Intrinsic */    
+    in egress_intrinsic_metadata_t eg_intr_md,
+    in egress_intrinsic_metadata_from_parser_t eg_intr_prsr_md,
+    inout egress_intrinsic_metadata_for_deparser_t eg_intr_dprsr_md,
+    inout egress_intrinsic_metadata_for_output_port_t eg_intr_tm_md)
 {
     apply {
     }

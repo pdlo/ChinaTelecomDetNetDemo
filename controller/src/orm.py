@@ -3,11 +3,11 @@
 运行此文件将会建表。
 """
 from typing import Optional
-from sqlmodel import Field, SQLModel, create_engine  #, Relationship  暂时不使用此功能，请手动处理连接关系
+from sqlmodel import Field, SQLModel, create_engine, Relationship
 from pathlib import Path
 from datetime import datetime
 
-__all__=['Sgw','SgwInterface','SgwLink','SgwLinkState','Cpe','Business','Route','engine']
+__all__=['Sgw','SgwInterface','SgwLink','SgwLinkState','Cpe','Host','Business','Route','engine']
 
 class Sgw(SQLModel, table=True):
     """
@@ -36,10 +36,10 @@ class SgwLink(SQLModel, table=True):
     连接有方向（因为int）。两个sgw之间需要添加两个连接。
     """
     id: Optional[int] = Field(default=None, primary_key=True)
-    sgw_id_1:int = Field(foreign_key="sgw.id")
-    interface_id_1:int  = Field(foreign_key="sgwinterface.id")
-    sgw_id_2:int = Field(foreign_key="sgw.id")
-    interface_id_2:int = Field(foreign_key="sgwinterface.id")
+    src_sgw_id:int = Field(foreign_key="sgw.id")
+    src_bmv2_port:int
+    dst_sgw_id:int = Field(foreign_key="sgw.id")
+    dst_bmv2_port:int
 
 class SgwLinkState(SQLModel, table=True):
     """
@@ -63,7 +63,10 @@ class Cpe(SQLModel, table=True):
     console_ip:str = Field(description="用于ssh的ipv4地址和端口，使用类似219.242.112.215:6153的格式")
     connect_sgw:int = Field(foreign_key="sgw.id")
     port_to_sgw:int = Field(description="p4程序中的端口号")
-    srv6_locator:str = Field(description="半个ipv6地址（64bit），使用类似2001:0db8的格式")
+    srv6_locator:str = Field(description="使用类似2001:0db8的格式,32bit")
+    subnet_ip:str
+    subnet_mask:int 
+    host:Optional['Host']= Relationship(back_populates='cpe')
 
 class Host(SQLModel, table=True):
     """
@@ -72,8 +75,13 @@ class Host(SQLModel, table=True):
     """
     id: Optional[int] = Field(default=None, primary_key=True)
     name:str
-    ip: str
+    ip : str
+    mac : str
+
     cpe_id:int = Field(foreign_key="cpe.id",description="入网cpe")
+    cpe_bmv2_port:int
+    cpe:Optional[Cpe] = Relationship(back_populates='host')
+
 
 class Business(SQLModel, table=True):
     """
@@ -89,7 +97,7 @@ class Business(SQLModel, table=True):
     rate:Optional[int]=Field(default=None)
     loss:Optional[float]=Field(default=None)
     disorder:Optional[float]=Field(default=None)
-    tos:Optional[int]=Field(default=0,description="8bit，0~255")
+    qos:Optional[int]=Field(default=0,description="8bit，0~255")
 
 class Route(SQLModel, table=True):
     """
@@ -98,7 +106,7 @@ class Route(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     src_cpe_id:int=Field(foreign_key="cpe.id",description="入网cpe")
     dst_cpe_id:int=Field(foreign_key="cpe.id",description="出网cpe")
-    tos:int=Field(description="8bit，0~255")
+    qos:int=Field(description="8bit，0~255")
     route:str= Field(description="用逗号分割的若干个sgw.id。(不包含cpe)")
 
 sqlite_file=Path(__file__).parent.parent/"database.db"

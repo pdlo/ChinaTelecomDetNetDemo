@@ -10,6 +10,7 @@ dependencies = [
     "sqlmodel>=0.0.16",
     "toml>=0.10.2",
     "fabric>=3.2.2",
+    "scapy>=2.5.0",
 ]
 requires-python = "==3.8.*"
 readme = "README.md"

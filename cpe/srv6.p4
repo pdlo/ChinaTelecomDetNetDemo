@@ -319,8 +319,6 @@ control Ingress(
         //插入srv6头部
         key = {
             hdr.ipv4.dst_addr: lpm;   //目的ipv4
-            //hdr.ipv4.src_addr: exact;   //源ipv4
-            //hdr.tcp.dst_port: exact;   //目的tcp端口,感觉这个约束之前有了，现在不需要
             meta.trafficclass: exact;   //流等级       
         }
         actions = {
@@ -377,21 +375,6 @@ control Ingress(
     //--------------------------------------------------------------------------------------------------------
     apply {
         if (hdr.arp.isValid()) {
-            //10.153.182.2   0x0a99a202
-            /*
-            if (hdr.arp.target_ip == 0x0a99b602) {
-                    //ask who is 10.153.182.2
-                    hdr.ethernet.dstAddr = hdr.ethernet.srcAddr;
-                    hdr.ethernet.srcAddr = 0x000015304156;
-                    hdr.arp.OPER = 2;
-                    hdr.arp.target_ha = hdr.arp.sender_ha;
-                    hdr.arp.target_ip = hdr.arp.sender_ip;
-                    hdr.arp.sender_ip = 0x0a99b602;
-                    hdr.arp.sender_ha = 0x000015304156;
-                    ig_intr_tm_md.ucast_egress_port = ig_intr_md.ingress_port;
-                }
-              */  
-            
             hdr.ethernet.dstAddr = hdr.ethernet.srcAddr;
             hdr.ethernet.srcAddr = VIRTUAL_MAC;
             hdr.arp.OPER = 2;

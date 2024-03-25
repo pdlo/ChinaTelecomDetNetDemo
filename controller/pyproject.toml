@@ -11,6 +11,7 @@ dependencies = [
     "toml>=0.10.2",
     "fabric>=3.2.2",
     "scapy>=2.5.0",
+    "streamlit>=1.32.2",
 ]
 requires-python = "==3.8.*"
 readme = "README.md"

@@ -41,13 +41,18 @@ class SgwLink(SQLModel, table=True):
     dst_sgw_id:int = Field(foreign_key="sgw.id")
     dst_bmv2_port:int
 
+    link_state:Optional['SgwLinkState']=Relationship(back_populates='link')
+
 class SgwLinkState(SQLModel, table=True):
     """
     由int程序写入
     schedule程序读取
     """
     id: Optional[int] = Field(default=None, primary_key=True)
+
     link_id:int= Field(foreign_key="sgwlink.id")
+    link:Optional[SgwLink]=Relationship(back_populates='link_state')
+
     create_datetime:datetime
     delay:Optional[int]=Field(default=None)
     rate:Optional[int]=Field(default=None)

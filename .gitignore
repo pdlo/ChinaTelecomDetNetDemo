@@ -172,3 +172,4 @@ cython_debug/
 controller/tests/dbtest.py
 controller/tests/test.py
 controller/config.toml
+controller/src/test.py

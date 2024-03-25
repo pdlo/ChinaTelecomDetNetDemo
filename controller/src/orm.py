@@ -101,7 +101,7 @@ class Business(SQLModel, table=True):
     """
     所有被特殊对待的业务。
     表中的业务将按照route中对应的表项进行路由。
-    不在表中的业务或tos为0按照默认路由走
+    不在表中的业务或qos为0按照默认路由走
     """
     id: Optional[int] = Field(default=None, primary_key=True)
     src_host_id:str = Field(foreign_key="host.id")
@@ -115,7 +115,9 @@ class Business(SQLModel, table=True):
 
 class Route(SQLModel, table=True):
     """
-    此表由schedule程序写入。仅用于展示。
+    表示每对cpe间各个可用qos类型的路由。
+    此表由schedule程序写入。（由于算法未完成，暂定手动填写）
+    只需要包含中间的sgw，无需包含入网sgw、出网sgw和出网cpe，这会根据src_cpe和dst_cpe生成
     """
     id: Optional[int] = Field(default=None, primary_key=True)
     
@@ -130,7 +132,7 @@ class Route(SQLModel, table=True):
 
 sqlite_file=Path(__file__).parent.parent/"database.db"
 sqlite_url = f"sqlite:///{sqlite_file}"
-engine = create_engine(sqlite_url, echo=True)
+engine = create_engine(sqlite_url, echo=False)
 
 def main():
     SQLModel.metadata.create_all(engine)

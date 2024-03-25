@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from src.cpe_table.utils import ip_to_hex,VIRTUAL_MAC
+from src.cpe_table.utils import ip_to_hex,VIRTUAL_MAC,mac_to_hex
 from src.cpe_table.send_bfrt_python import send
 from src import orm
 
@@ -25,14 +25,13 @@ try:
         dst_addr={ip_to_hex(dst_ip)}, 
         dst_addr_p_length={dst_mask}, 
     )
-    print("已删除原有流表项")
 except:
     pass
 table.add_with_ipv4_forward(
     dst_addr={ip_to_hex(dst_ip)}, 
     dst_addr_p_length={dst_mask}, 
-    src_mac={src_mac}, 
-    dst_mac={dst_mac},
+    src_mac={mac_to_hex(src_mac)}, 
+    dst_mac={mac_to_hex(dst_mac)},
     port={bmv2_port}
 )
 table.dump()

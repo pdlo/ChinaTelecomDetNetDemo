@@ -1,7 +1,7 @@
-INSERT INTO "sgw" ("id", "name", "console_ip", "srv6_locator") VALUES (1, '182', '219.242.112.215:6182', '0000:0182');
-INSERT INTO "sgw" ("id", "name", "console_ip", "srv6_locator") VALUES (2, '184', '219.242.112.215.6184', '0000:0184');
-INSERT INTO "sgw" ("id", "name", "console_ip", "srv6_locator") VALUES (3, '186', '219.242.112.215.6186', '0000:0186');
-INSERT INTO "sgw" ("id", "name", "console_ip", "srv6_locator") VALUES (4, '188', '219.242.112.215.6188', '0000:0188');
+INSERT INTO "sgw" ("id", "name", "console_ip", "srv6_locator") VALUES (1, '181', '219.242.112.215:6182', '0000:0181');
+INSERT INTO "sgw" ("id", "name", "console_ip", "srv6_locator") VALUES (2, '183', '219.242.112.215.6184', '0000:0183');
+INSERT INTO "sgw" ("id", "name", "console_ip", "srv6_locator") VALUES (3, '185', '219.242.112.215.6186', '0000:0185');
+INSERT INTO "sgw" ("id", "name", "console_ip", "srv6_locator") VALUES (4, '187', '219.242.112.215.6188', '0000:0187');
 
 INSERT INTO "sgwinterface" ("id", "name", "sgw_id", "bmv2_port") VALUES (1, 'ens2f0', 1, 1);
 INSERT INTO "sgwinterface" ("id", "name", "sgw_id", "bmv2_port") VALUES (2, 'ens2f2', 1, 2);
@@ -16,9 +16,9 @@ INSERT INTO "sgwinterface" ("id", "name", "sgw_id", "bmv2_port") VALUES (10, 'et
 INSERT INTO "sgwinterface" ("id", "name", "sgw_id", "bmv2_port") VALUES (11, 'ens2f2', 4, 2);
 INSERT INTO "sgwinterface" ("id", "name", "sgw_id", "bmv2_port") VALUES (12, 'ens1f3', 4, 3);
 
-INSERT INTO "cpe" ("id", "name", "console_ip", "connect_sgw","port_to_sgw", "srv6_locator","subnet_ip","subnet_mask") VALUES (1, '151', '219.242.112.215:6151', 1, 172,'0000:0151','10.151.0.0',16);
-INSERT INTO "cpe" ("id", "name", "console_ip", "connect_sgw","port_to_sgw", "srv6_locator","subnet_ip","subnet_mask") VALUES (2, '152', '219.242.112.215:6152', 3, 172,'0000:0152','10.152.0.0',16);
-INSERT INTO "cpe" ("id", "name", "console_ip", "connect_sgw","port_to_sgw", "srv6_locator","subnet_ip","subnet_mask") VALUES (3, '153', '219.242.112.215:6153', 4, 172,'0000:0153','10.153.0.0',16);
+INSERT INTO "cpe" ("id", "name", "console_ip", "connect_sgw","port_to_sgw", "srv6_locator","subnet_ip","subnet_mask") VALUES (1, '151', '219.242.112.215:6151', 1, 156,'0000:0151','10.151.0.0',16);
+INSERT INTO "cpe" ("id", "name", "console_ip", "connect_sgw","port_to_sgw", "srv6_locator","subnet_ip","subnet_mask") VALUES (2, '152', '219.242.112.215:6152', 3, 156,'0000:0152','10.152.0.0',16);
+INSERT INTO "cpe" ("id", "name", "console_ip", "connect_sgw","port_to_sgw", "srv6_locator","subnet_ip","subnet_mask") VALUES (3, '153', '219.242.112.215:6153', 4, 156,'0000:0153','10.153.0.0',16);
 
 INSERT INTO "route" ("id", "src_cpe_id", "dst_cpe_id", "qos", "route") VALUES (1, 1, 2, 0, '1,2,3');
 INSERT INTO "route" ("id", "src_cpe_id", "dst_cpe_id", "qos", "route") VALUES (2, 1, 2, 1, '1,4,3');

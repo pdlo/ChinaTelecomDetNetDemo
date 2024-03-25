@@ -2,7 +2,7 @@
 包含各个表的orm。
 运行此文件将会建表。
 """
-from typing import Optional
+from typing import Optional,List
 from sqlmodel import Field, SQLModel, create_engine, Relationship
 from pathlib import Path
 from datetime import datetime
@@ -18,6 +18,8 @@ class Sgw(SQLModel, table=True):
     name: str
     console_ip:str = Field(description="用于ssh的ipv4地址和端口，使用类似219.242.112.215:6153的格式")
     srv6_locator:str = Field(description="半个ipv6地址（64bit），使用类似2001:0db8的格式")
+
+    sgwlink:List['SgwLink'] = Relationship(back_populates='src_sgw',sa_relationship_kwargs=dict(foreign_keys="[SgwLink.src_sgw_id]"))
 
 class SgwInterface(SQLModel, table=True):
     """
@@ -36,13 +38,17 @@ class SgwLink(SQLModel, table=True):
     连接有方向（因为int）。两个sgw之间需要添加两个连接。
     """
     id: Optional[int] = Field(default=None, primary_key=True)
+
     src_sgw_id:int = Field(foreign_key="sgw.id")
+    src_sgw:Optional[Sgw] = Relationship(back_populates='sgwlink',sa_relationship_kwargs=dict(foreign_keys="[SgwLink.src_sgw_id]"))
     src_bmv2_port:int
+
     dst_sgw_id:int = Field(foreign_key="sgw.id")
+    dst_sgw:Optional[Sgw] = Relationship(sa_relationship_kwargs=dict(foreign_keys="[SgwLink.dst_sgw_id]"))
     dst_bmv2_port:int
 
-    link_state:Optional['SgwLinkState']=Relationship(back_populates='link')
-
+    link_state:Optional['SgwLinkState'] = Relationship(back_populates='link')
+    
 class SgwLinkState(SQLModel, table=True):
     """
     由int程序写入
@@ -71,7 +77,10 @@ class Cpe(SQLModel, table=True):
     srv6_locator:str = Field(description="使用类似2001:0db8的格式,32bit")
     subnet_ip:str
     subnet_mask:int 
-    host:Optional['Host']= Relationship(back_populates='cpe')
+    host:List['Host']= Relationship(back_populates='cpe')
+
+    route:List['Route'] = Relationship(back_populates='src_cpe',sa_relationship_kwargs=dict(foreign_keys="[Route.src_cpe_id]"))
+
 
 class Host(SQLModel, table=True):
     """
@@ -109,8 +118,13 @@ class Route(SQLModel, table=True):
     此表由schedule程序写入。仅用于展示。
     """
     id: Optional[int] = Field(default=None, primary_key=True)
+    
     src_cpe_id:int=Field(foreign_key="cpe.id",description="入网cpe")
+    src_cpe:Optional[Cpe] = Relationship(back_populates='route',sa_relationship_kwargs=dict(foreign_keys="[Route.src_cpe_id]"))
+
     dst_cpe_id:int=Field(foreign_key="cpe.id",description="出网cpe")
+    dst_cpe:Optional[Cpe] = Relationship(sa_relationship_kwargs=dict(foreign_keys="[Route.dst_cpe_id]"))
+
     qos:int=Field(description="8bit，0~255")
     route:str= Field(description="用逗号分割的若干个sgw.id。(不包含cpe)")
 

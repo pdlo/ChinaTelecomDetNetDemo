@@ -12,6 +12,7 @@ sys.path.append(str(root))
 from src.cpe_table import select_traffic_class
 from src.orm import *
 from src.app.traffic_class_mapping import mapping_to_qos
+from src.config import config
 
 def __get_qos_1(*args):
     return 1
@@ -68,7 +69,7 @@ def add_business(src_name:str,src_port:int,dst_name:str,dst_port:int,delay:int,r
             dst_ip=dst.ip,
             dst_port=dst_port,
             qos=qos,
-            send_code=False
+            send_code=config['app']['send_table']
         )
 
         select_traffic_class.add_with_get_traffic_class(
@@ -78,7 +79,7 @@ def add_business(src_name:str,src_port:int,dst_name:str,dst_port:int,delay:int,r
             dst_ip=src.ip,
             dst_port=src_port,
             qos=qos,
-            send_code=False
+            send_code=config['app']['send_table']
         )
         
         session.commit()

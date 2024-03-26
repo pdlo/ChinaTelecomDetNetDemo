@@ -33,6 +33,7 @@ table.add_with_get_traffic_class(
     dst_addr={ip_to_hex(dst_ip)}, 
     src_addr={ip_to_hex(src_ip)}, 
     dst_port={dst_port}, 
+    src_port={src_port},
     trafficclass={qos}
 )
 table.dump()

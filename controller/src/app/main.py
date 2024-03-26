@@ -74,6 +74,8 @@ with col2:
             disorder=st.number_input("乱序需求(%)",disabled=True)
 
         if st.form_submit_button("添加/修改"):
+            bussiness_container.warning("流表下发中，请稍候。")
+            int_table_container.warning("流表下发中，请稍候。")
             try:
                 add_business(
                     src_name,
@@ -87,15 +89,16 @@ with col2:
                 )
                 print(get_bussiness()[0]['时延需求(μs)'])
             except Exception as e:
-                st.error(str(e))
+                # st.error(str(e))
+                raise e
 
-with bussiness_container:
-    business_df=pd.DataFrame(get_bussiness())
-    st.dataframe(
-        business_df,
-        hide_index=True,
-        use_container_width=True,
-    )
+
+business_df=pd.DataFrame(get_bussiness())
+bussiness_container.dataframe(
+    business_df,
+    hide_index=True,
+    use_container_width=True,
+)
 
 
 last_schedule_time=datetime.min

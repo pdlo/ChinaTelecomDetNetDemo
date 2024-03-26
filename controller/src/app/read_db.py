@@ -11,13 +11,14 @@ sys.path.append(str(root))
 
 from src.cpe_table import select_traffic_class
 from src.orm import *
+from src.app.traffic_class_mapping import mapping_to_qos
 
 def __get_qos_1(*args):
     return 1
 
 def add_business(src_name:str,src_port:int,dst_name:str,dst_port:int,delay:int,rate:int,loss:float,disorder:float):
     with Session(engine) as session:
-        qos=__get_qos_1(delay)
+        qos=mapping_to_qos(delay)
         if src_name>dst_name:
             src_name,dst_name=dst_name,src_name
         

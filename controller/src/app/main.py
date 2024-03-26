@@ -2,18 +2,18 @@
 1. 所有业务的状态，对应的路由
 2. 所有int数据
 """
-from pathlib import Path
-import sys
 import streamlit as st
 from sqlmodel import select,Session
 import pandas as pd
+from datetime import datetime,timedelta
+from pathlib import Path
+import sys
 
 root=Path(__file__).parent.parent.parent
-print(root)
 sys.path.append(str(root))
 
 from src import orm
-from src.app.read_db import get_link_latest_states_iter,get_routes_iter
+from src.app.read_db import get_link_latest_states_iter,get_all_route,get_bussiness,add_business
 
 if "config_seted" not in st.session_state:
     st.session_state["config_seted"]=True
@@ -24,30 +24,92 @@ if "config_seted" not in st.session_state:
     )
 
 
-image_path=root.parent/'docs'/'实验拓扑.png'
-st.subheader("实验网络拓扑")
-st.image(str(image_path))
 st.write("---")
 
-col1,col2=st.columns([4,6])
+col1,col2,col3=st.columns([4,3,3])
 
 with col1:
-    st.subheader("网络状态")
-    state_df=pd.DataFrame(get_link_latest_states_iter())
-
-    st.dataframe(
-        state_df,
-        hide_index=True,
-        use_container_width=True
-    )
+    st.subheader("实验网络拓扑")
+    image_path=root.parent/'docs'/'实验拓扑.png'
+    st.image(str(image_path))
 
 with col2:
+    st.subheader("网络状态")
+    int_table_container=st.empty()
+
+with col3:
     st.subheader("路由")
-    route_df=pd.DataFrame(get_routes_iter())
+    route_df=pd.DataFrame(get_all_route())
     st.dataframe(
         route_df,
         hide_index=True,
-        use_container_width=True
+        use_container_width=True,
     )
 
-st.write("---")
+
+col1,col2=st.columns([5,5])
+with col1:
+    st.subheader("业务")
+    bussiness_container=st.empty()
+
+with col2:
+    with st.form("添加业务(部分功能尚未实现)"):
+        inner_col1,inner_col2 = st.columns(2)
+        with inner_col1:
+            src_name=st.text_input("主机1",value='162')
+            dst_name=st.text_input("主机2",value='166')
+            
+        with inner_col2:
+            src_port=st.number_input("主机1端口",value=1234,step=1)
+            dst_port=st.number_input("主机2端口",value=1234,step=1)
+
+        st.write('---')
+
+        inner_col1,inner_col2 = st.columns(2)
+        with inner_col1:
+            delay=st.number_input("时延需求(μs)",step=1)
+            rate=st.number_input("带宽需求(bit/s)",disabled=True,step=1)
+        with inner_col2:
+            loss=st.number_input("丢包率需求(%)",disabled=True)
+            disorder=st.number_input("乱序需求(%)",disabled=True)
+
+        if st.form_submit_button("添加/修改"):
+            try:
+                add_business(
+                    src_name,
+                    int(src_port),
+                    dst_name,
+                    int(dst_port),
+                    int(delay),
+                    int(rate),
+                    loss,
+                    disorder
+                )
+                print(get_bussiness()[0]['时延需求(μs)'])
+            except Exception as e:
+                st.error(str(e))
+
+with bussiness_container:
+    business_df=pd.DataFrame(get_bussiness())
+    st.dataframe(
+        business_df,
+        hide_index=True,
+        use_container_width=True,
+    )
+
+
+last_schedule_time=datetime.min
+while True:
+    now_time=datetime.now()
+    if now_time-last_schedule_time < timedelta(seconds=5):
+        continue
+    last_schedule_time=now_time
+    container = int_table_container.container()
+    with container:
+        st.write(datetime.now().strftime("最后更新于 %Y.%m.%d %H:%M:%S"))
+        state_df=pd.DataFrame(get_link_latest_states_iter())
+        st.dataframe(
+            state_df,
+            hide_index=True,
+            use_container_width=True
+        )

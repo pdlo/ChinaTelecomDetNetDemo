@@ -96,17 +96,27 @@ class Host(SQLModel, table=True):
     cpe_bmv2_port:int
     cpe:Optional[Cpe] = Relationship(back_populates='host')
 
+    src_business:List['Business'] = Relationship(back_populates="src_host",sa_relationship_kwargs=dict(foreign_keys="[Business.src_host_id]"))
+    dst_business:List['Business'] = Relationship(back_populates="dst_host",sa_relationship_kwargs=dict(foreign_keys="[Business.dst_host_id]"))
+
 
 class Business(SQLModel, table=True):
     """
     所有被特殊对待的业务。
     表中的业务将按照route中对应的表项进行路由。
     不在表中的业务或qos为0按照默认路由走
+    现在不区分src和dst，src和dst按照字典顺序排序
     """
     id: Optional[int] = Field(default=None, primary_key=True)
+    
     src_host_id:str = Field(foreign_key="host.id")
+    src_host:Optional[Host] = Relationship(back_populates="src_business",sa_relationship_kwargs=dict(foreign_keys="[Business.src_host_id]"))
+    src_port:int
+
     dst_host_id:str = Field(foreign_key="host.id",description="目的主机的ip地址")
-    dst_port:int = Field(description="目的主机的端口号")
+    dst_host:Optional[Host] = Relationship(back_populates="dst_business",sa_relationship_kwargs=dict(foreign_keys="[Business.dst_host_id]"))
+    dst_port:int
+
     delay:Optional[int]=Field(default=None)
     rate:Optional[int]=Field(default=None)
     loss:Optional[float]=Field(default=None)

@@ -5,6 +5,7 @@
 代码基于python3。
 ### 安装依赖
 ```bash
+sudo apt install sqlite3
 sudo apt install python3.8-venv
 sudo apt install pipx
 pipx install pdm
@@ -22,12 +23,12 @@ sqlite3 database.db < ./src/网络拓扑.sql
 
 ### 启动
 ```bash
-pdm venv activate
+source .venv/bin/activate
 #下发初始流表
 python -m src.cpe_table
 #启动int
-python -m src.int.send
-python -m src.int.receive
+sudo ./.venv/bin/python -m src.int.send
+sudo ./.venv/bin/python -m src.int.receive
 #启动展示页面
 streamlit run ./src/app/main.py --server.address 0.0.0.0 --server.port 8888
 ```

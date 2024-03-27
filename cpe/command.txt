@@ -1,0 +1,9 @@
+ucli
+
+pm port-add 4/0 10g NONE
+pm port-enb 4/0  
+pm port-add 33/0 10g NONE
+pm port-enb 33/0 
+
+exit
+exit

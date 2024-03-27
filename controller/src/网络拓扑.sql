@@ -16,14 +16,19 @@ INSERT INTO "sgwinterface" ("id", "name", "sgw_id", "bmv2_port") VALUES (10, 'et
 INSERT INTO "sgwinterface" ("id", "name", "sgw_id", "bmv2_port") VALUES (11, 'ens2f2', 4, 2);
 INSERT INTO "sgwinterface" ("id", "name", "sgw_id", "bmv2_port") VALUES (12, 'ens1f3', 4, 3);
 
-INSERT INTO "sgwlink" ("id", "src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (1, 1,1,2,1);
-INSERT INTO "sgwlink" ("id", "src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (2, 1,2,4,2);
-INSERT INTO "sgwlink" ("id", "src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (3, 2,2,3,2);
-INSERT INTO "sgwlink" ("id", "src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (4, 3,1,4,1);
-INSERT INTO "sgwlink" ("id", "src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (5, 2,1,1,1);
-INSERT INTO "sgwlink" ("id", "src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (6, 4,2,1,2);
-INSERT INTO "sgwlink" ("id", "src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (7, 3,2,2,2);
-INSERT INTO "sgwlink" ("id", "src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (8, 4,1,3,1);
+INSERT INTO "sgwlink" ("src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (1,1,2,1);
+INSERT INTO "sgwlink" ("src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (1,3,3,3);
+INSERT INTO "sgwlink" ("src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (1,2,4,2);
+INSERT INTO "sgwlink" ("src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (2,2,3,2);
+INSERT INTO "sgwlink" ("src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (2,3,4,3);
+INSERT INTO "sgwlink" ("src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (3,1,4,1);
+
+INSERT INTO "sgwlink" ("src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (2,1,1,1);
+INSERT INTO "sgwlink" ("src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (3,3,1,3);
+INSERT INTO "sgwlink" ("src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (4,2,1,2);
+INSERT INTO "sgwlink" ("src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (3,2,2,2);
+INSERT INTO "sgwlink" ("src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (4,3,2,3);
+INSERT INTO "sgwlink" ("src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_port") VALUES (4,1,3,1);
 
 INSERT INTO "cpe" ("id", "name", "console_ip", "connect_sgw","port_to_sgw", "srv6_locator","subnet_ip","subnet_mask") VALUES (1, '151', '219.242.112.215:6151', 1, 156,'0000:0151','10.151.0.0',16);
 INSERT INTO "cpe" ("id", "name", "console_ip", "connect_sgw","port_to_sgw", "srv6_locator","subnet_ip","subnet_mask") VALUES (2, '152', '219.242.112.215:6152', 3, 156,'0000:0152','10.152.0.0',16);

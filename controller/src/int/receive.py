@@ -33,6 +33,7 @@ def expand(x):
         yield x
 
 def handle_pkt(pkt):
+    pkt.show2()
     if pkt.haslayer(probe_data):
         probe_data_layers = [l for l in expand(pkt) if l.name == 'probe_data']
         print("")
@@ -40,12 +41,12 @@ def handle_pkt(pkt):
             l = len(probe_data_layers)
             for i in range(l - 1, -1, -1):
                 Throughput = 1.0 * probe_data_layers[i].egress_byte_cnt / (probe_data_layers[i].egress_cur_time - probe_data_layers[i].egress_last_time)
-                delay = (probe_data_layers[i].egress_cur_time - probe_data_layers[i - 1].egress_cur_time) * 10 ** -6
+                delay = (probe_data_layers[i].egress_cur_time - probe_data_layers[i - 1].egress_cur_time) 
                 delay = abs(delay)
-                Packet_Loss_Rate = 1.0 * (probe_data_layers[i].egress_packet_count - probe_data_layers[i - 1].egress_packet_count) / probe_data_layers[i].egress_packet_count * 100
+                Packet_Loss_Rate = 1.0 * (probe_data_layers[i].egress_packet_count - probe_data_layers[i - 1].ingress_packet_count) / probe_data_layers[i].egress_packet_count * 100
                 print("Switch{} Port{} Switch{} Port{}    Throughput:{}MBps delay:{}s Packet_Loss_Rate:{}%".format(
                     probe_data_layers[i].swid, probe_data_layers[i].egress_port,
-                    probe_data_layers[i - 1].swid, probe_data_layers[i - 1].egress_port,
+                    probe_data_layers[i - 1].swid, probe_data_layers[i - 1].ingress_port,
                     Throughput, delay, Packet_Loss_Rate))
 
                 swid_1 = probe_data_layers[i].swid
@@ -62,8 +63,8 @@ def handle_pkt(pkt):
                     link_state = SgwLinkState(
                         link_id=sgw_link.id,
                         create_datetime=datetime.now(),
-                        delay=int(delay*100000),
-                        rate=int(Throughput*100000),
+                        delay=int(delay),
+                        rate=int(Throughput*1000000),
                         lost=float(Packet_Loss_Rate)
                     )
                     session.add(link_state)

@@ -1,4 +1,6 @@
 controller/database.db
+controller/database.db-journal
+
 **\.log
 **\__pycache__
 **\.~vsdx

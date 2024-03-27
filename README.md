@@ -14,8 +14,15 @@ pdm install
 
 ### 启动
 ```bash
-streamlit ./src/app/main.py
+#下发初始流表
+python -m src.cpe_table
+#启动int
+
+#启动展示页面
+streamlit run ./src/app/main.py --server.address 0.0.0.0 --server.port 8888
+
 ```
+重复，以上命令请在 /controller 下执行
 
 ## 地址设置规定(暂定)
 ### 管理ssh地址
@@ -44,11 +51,11 @@ sudo ip route add 10.0.0.0/8 via 10.153.162.1 dev eth1
 
 ### 交换机(cpe)
 1. 使用tofino    
-1. 对于终端发来的数据包，按照源ip和目的ip匹配，添加相应的srv6头部
-    - 为了使终端能顺利发送数据，对终端进行arp欺骗
-    - 后续需要增加源端口号和目的端口号
-1. 对于sgw发来的数据包，按照ipv4转发。
-    - 为了使终端能顺利接收数据，要去掉除ipv6头部
+1. 为了使终端能顺利发送数据，对终端进行arp欺骗
+1. 对于终端发来的数据包
+    1. 按照源ip端口和目的ip端口匹配服务等级（默认或无端口则为0）
+    1. 按照目的ip和服务等级添加相应的srv6头部
+1. 对于sgw发来的数据包，按照ipv4转发，并去掉ipv6头部
 
 ### 交换机(sgw)
 1. 使用bmv2，绑定实体网卡

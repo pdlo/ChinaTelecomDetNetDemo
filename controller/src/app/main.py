@@ -12,7 +12,6 @@ import sys
 root=Path(__file__).parent.parent.parent
 sys.path.append(str(root))
 
-from src import orm
 from src.app.read_db import get_link_latest_states_iter,get_all_route,get_bussiness,add_business
 
 if "config_seted" not in st.session_state:
@@ -87,7 +86,6 @@ with col2:
                     loss,
                     disorder
                 )
-                print(get_bussiness()[0]['时延需求(μs)'])
             except Exception as e:
                 # st.error(str(e))
                 raise e

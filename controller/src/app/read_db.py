@@ -1,21 +1,12 @@
-from sqlmodel import select,Session,update,func
-import pandas as pd
+from sqlmodel import select,Session,func
 from typing import Dict,Union,Iterable,List
 from sqlalchemy.exc import NoResultFound
 
-from pathlib import Path
-import sys
-
-root=Path(__file__).parent.parent.parent
-sys.path.append(str(root))
-
 from src.cpe_table import select_traffic_class
-from src.orm import *
+from src.orm import Cpe,Host,Business,SgwLink,SgwLinkState,Sgw,Route
 from src.app.traffic_class_mapping import mapping_to_qos
+from src.app.engine import get_engine
 from src.config import config
-
-def __get_qos_1(*args):
-    return 1
 
 def add_business(src_name:str,src_port:int,dst_name:str,dst_port:int,delay:int,rate:int,loss:float,disorder:float):
     with Session(get_engine()) as session:

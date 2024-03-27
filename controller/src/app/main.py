@@ -14,14 +14,17 @@ sys.path.append(str(root))
 
 from src.app.read_db import get_link_latest_states_iter,get_all_route,get_bussiness,add_business
 
+page_title="基于业务感知和控制的确定性网络关键技术研究与验证项目实验与演示系统"
+
 if "config_seted" not in st.session_state:
     st.session_state["config_seted"]=True
     st.set_page_config(
-        page_title="页面标题待定",
+        page_title=page_title,
         layout="wide",
         initial_sidebar_state="expanded",
     )
 
+# st.header(page_title)
 
 st.write("---")
 
@@ -66,8 +69,18 @@ with col2:
 
         inner_col1,inner_col2 = st.columns(2)
         with inner_col1:
-            delay=st.number_input("时延需求(μs)",step=1)
-            rate=st.number_input("带宽需求(bit/s)",disabled=True,step=1)
+            delay_to_qos={
+                '0 ~ 20':(2,10),
+                '20 ~ 40':(1,40),
+                '40 ~ 60':(0,60),
+                '无限制':(0,0)
+            }
+            need = st.selectbox("时延需求(ms)",delay_to_qos.keys(),3)
+            qos,delay=(0,0) if need is None else delay_to_qos[need]
+            st.write(qos,delay)
+            assert isinstance(qos,int)
+            st.number_input("时延需求(μs)",step=1)
+            rate=st.number_input("带宽需求(byte/s)",disabled=True,step=1)
         with inner_col2:
             loss=st.number_input("丢包率需求(%)",disabled=True)
             disorder=st.number_input("乱序需求(%)",disabled=True)
@@ -77,11 +90,12 @@ with col2:
             int_table_container.warning("流表下发中，请稍候。")
             try:
                 add_business(
+                    qos,
                     src_name,
                     int(src_port),
                     dst_name,
                     int(dst_port),
-                    int(delay),
+                    delay,
                     int(rate),
                     loss,
                     disorder

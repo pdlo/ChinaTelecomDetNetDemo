@@ -4,13 +4,22 @@ from sqlalchemy.exc import NoResultFound
 
 from src.cpe_table import select_traffic_class
 from src.orm import Cpe,Host,Business,SgwLink,SgwLinkState,Sgw,Route
-from src.app.traffic_class_mapping import mapping_to_qos
+# from src.app.traffic_class_mapping import mapping_to_qos
 from src.app.engine import get_engine
 from src.config import config
 
-def add_business(src_name:str,src_port:int,dst_name:str,dst_port:int,delay:int,rate:int,loss:float,disorder:float):
+def add_business(
+        qos:int,
+        src_name:str,
+        src_port:int,
+        dst_name:str,
+        dst_port:int,
+        delay:int,
+        rate:int,
+        loss:float,
+        disorder:float
+    ):
     with Session(get_engine()) as session:
-        qos=mapping_to_qos(delay)
         if src_name>dst_name:
             src_name,dst_name=dst_name,src_name
         
@@ -105,9 +114,9 @@ def get_link_latest_states_iter() -> List[Dict[str, Union[float,str]]]:
             return {
                 '序号':link.id,
                 '连接':f"{link.src_sgw.name} - {link.dst_sgw.name}",
-                "时延(μs)":delay,
-                "吞吐量(bit/s)":rate,
-                "丢包率(%)":lost
+                "时延(ms)":'-' if delay is None else delay/100,
+                "吞吐量(bit/s)":'-' if rate is None else rate,
+                "丢包率(%)":'-' if lost is None else lost,
             }
         return list(map(__to_row,results))
 
@@ -167,5 +176,5 @@ def get_bussiness()->List[Dict]:
         return list(map(__to_row,bussinesses))
 
 if __name__ == "__main__":
-    add_business('162',5165,'166',1234,546546,0,0,0)
+    add_business(0,'162',5165,'166',1234,546546,0,0,0)
     print(get_bussiness()[0]['时延需求(μs)'])

@@ -114,7 +114,7 @@ def get_link_latest_states_iter() -> List[Dict[str, Union[float,str]]]:
             return {
                 '序号':link.id,
                 '连接':f"{link.src_sgw.name} - {link.dst_sgw.name}",
-                "时延(ms)":'-' if delay is None else delay/100,
+                "时延(ms)":'-' if delay is None else delay/1000,
                 "吞吐量(bit/s)":'-' if rate is None else rate,
                 "丢包率(%)":'-' if lost is None else lost,
             }

@@ -7,7 +7,7 @@ from sqlmodel import Field, SQLModel, create_engine, Relationship
 from pathlib import Path
 from datetime import datetime
 
-__all__=['Sgw','SgwInterface','SgwLink','SgwLinkState','Cpe','Host','Business','Route','engine']
+__all__=['Sgw','SgwInterface','SgwLink','SgwLinkState','Cpe','Host','Business','Route','get_engine']
 
 class Sgw(SQLModel, table=True):
     """
@@ -142,10 +142,11 @@ class Route(SQLModel, table=True):
 
 sqlite_file=Path(__file__).parent.parent/"database.db"
 sqlite_url = f"sqlite:///{sqlite_file}"
-engine = create_engine(sqlite_url, echo=False)
+def get_engine():
+    return create_engine(sqlite_url, echo=False)
 
 def main():
-    SQLModel.metadata.create_all(engine)
+    SQLModel.metadata.create_all(get_engine())
 
 if __name__ == "__main__":
     main()

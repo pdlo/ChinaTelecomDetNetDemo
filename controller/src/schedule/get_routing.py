@@ -1,6 +1,6 @@
 from sqlmodel import Session,select
 from typing import Sequence
-from src.orm import engine,Business,Route,SgwLink,SgwLinkState
+from src.orm import get_engine,Business,Route,SgwLink,SgwLinkState
 from sqlmodel import func
 from typing import List,Optional
 from dataclasses import dataclass
@@ -16,7 +16,7 @@ class CurrentLinkState:
     lost:Optional[float]
 
 def get_link_states()->List[CurrentLinkState]:
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         subquary = (
             select(SgwLinkState,func.max(SgwLinkState.create_datetime))
             .group_by(SgwLinkState.link_id) # type: ignore
@@ -52,7 +52,7 @@ def static(connections:Sequence[CurrentLinkState],businesses:Sequence[Business])
 route_algorithm=static
 
 def get_routings()->List[Route]:
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         statement = select(Business)
         businesses = session.exec(statement).all()
         connections=get_link_states()

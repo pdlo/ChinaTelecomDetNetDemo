@@ -4,7 +4,7 @@ from datetime import datetime
 from scapy.all import sniff, get_if_list
 from sqlmodel import SQLModel, Session, select, create_engine
 from src.int.headers_definition import probe_data
-from src.orm import SgwLink,SgwLinkState,engine
+from src.orm import SgwLink,SgwLinkState,get_engine
 from sqlmodel import select as sql_select
 
 # 创建数据库引擎，这里的 DATABASE_URI 应该替换为实际的数据库 URI
@@ -36,7 +36,7 @@ def handle_pkt(pkt):
     if pkt.haslayer(probe_data):
         probe_data_layers = [l for l in expand(pkt) if l.name == 'probe_data']
         print("")
-        with Session(engine) as session:
+        with Session(get_engine()) as session:
             l = len(probe_data_layers)
             for i in range(l - 1, -1, -1):
                 Throughput = 1.0 * probe_data_layers[i].egress_byte_cnt / (probe_data_layers[i].egress_cur_time - probe_data_layers[i].egress_last_time)

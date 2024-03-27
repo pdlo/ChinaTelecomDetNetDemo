@@ -2,7 +2,7 @@ from src import orm
 
 from sqlmodel import select,Session
 
-session=Session(orm.engine)
+session=Session(orm.get_engine())
 
 def get_cpe_by_id(cpe_id:int)->orm.Cpe:
     statement = select(orm.Cpe).where(orm.Cpe.id==cpe_id)

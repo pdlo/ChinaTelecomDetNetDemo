@@ -3,7 +3,7 @@
 未测试
 """
 
-from src.orm import engine,Host,Cpe,Route
+from src.orm import get_engine,Host,Cpe,Route
 from src import cpe_table
 from src.cpe_table.send_bfrt_python import send
 
@@ -27,7 +27,7 @@ def save_log():
         with ( log_path/f'{k} 输出' ).open('w') as f:
             f.write("\n\n#====================================\n\n".join(v))
 
-session=Session(engine)
+session=Session(get_engine())
 
 # 对于每个主机，为相应的cpe下发srv6_drop
 hosts=session.exec(select(Host)).all()

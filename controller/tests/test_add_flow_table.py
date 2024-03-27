@@ -7,7 +7,7 @@ from src.cpe_table import send_bfrt_python,select_srv6_path,select_traffic_class
 from src import orm
 
 target_cpe=153
-with Session(orm.engine) as session:
+with Session(orm.get_engine()) as session:
     cpe=session.exec(select(orm.Cpe).where(orm.Cpe.name==str(target_cpe))).one()
 
 dst_ip='10.152.0.0'

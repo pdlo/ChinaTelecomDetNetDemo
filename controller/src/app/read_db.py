@@ -18,7 +18,7 @@ def __get_qos_1(*args):
     return 1
 
 def add_business(src_name:str,src_port:int,dst_name:str,dst_port:int,delay:int,rate:int,loss:float,disorder:float):
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         qos=mapping_to_qos(delay)
         if src_name>dst_name:
             src_name,dst_name=dst_name,src_name
@@ -85,7 +85,7 @@ def add_business(src_name:str,src_port:int,dst_name:str,dst_port:int,delay:int,r
         session.commit()
         
 def get_link_latest_states_iter() -> List[Dict[str, Union[float,str]]]:
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         subquary = (
             select(SgwLinkState,func.max(SgwLinkState.create_datetime))
             .group_by(SgwLinkState.link_id) # type: ignore
@@ -121,7 +121,7 @@ def get_link_latest_states_iter() -> List[Dict[str, Union[float,str]]]:
         return list(map(__to_row,results))
 
 def get_all_route() -> List[Dict[str, Union[float,str]]]:
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         routes=session.exec(select(Route)).all()
         def __to_row(route:Route):
             assert isinstance(route.src_cpe,Cpe)
@@ -136,7 +136,7 @@ def get_all_route() -> List[Dict[str, Union[float,str]]]:
         return list(map(__to_row,routes))
     
 def get_route_by_host(src:Host,dst:Host,qos:int):
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         assert isinstance(src.cpe,Cpe)
         assert isinstance(dst.cpe,Cpe)
         statement=select(Route.route).where(Route.src_cpe_id == src.cpe_id,Route.dst_cpe_id==dst.cpe_id,Route.qos==qos)
@@ -145,7 +145,7 @@ def get_route_by_host(src:Host,dst:Host,qos:int):
 
 def __phase_route(ids:Iterable[int]) -> str:
     names:list[str]=[]
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         for id in ids:
             statement=select(Sgw.name).where(Sgw.id==id)
             name:str = session.exec(statement).one()
@@ -154,7 +154,7 @@ def __phase_route(ids:Iterable[int]) -> str:
         
 
 def get_bussiness()->List[Dict]:
-    with Session(engine) as session:
+    with Session(get_engine()) as session:
         bussinesses=session.exec(select(Business)).all()
         def __to_row(bussiness:Business):
             assert isinstance(bussiness.src_host,Host)

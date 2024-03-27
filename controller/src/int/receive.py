@@ -33,6 +33,7 @@ def expand(x):
         yield x
 
 def handle_pkt(pkt):
+    pkt.show2()
     if pkt.haslayer(probe_data):
         probe_data_layers = [l for l in expand(pkt) if l.name == 'probe_data']
         print("")

@@ -1,12 +1,18 @@
+from sqlalchemy import Engine
 from sqlmodel import select,Session,func
-from typing import Dict,Union,Iterable,List
+from typing import Iterable
 from sqlalchemy.exc import NoResultFound
+import streamlit as st 
+import pandas as pd
 
 from src.cpe_table import select_traffic_class
-from src.orm import Cpe,Host,Business,SgwLink,SgwLinkState,Sgw,Route
-# from src.app.traffic_class_mapping import mapping_to_qos
-from src.app.engine import get_engine
+from src.orm import Cpe,Host,Business,SgwLink,SgwLinkState,Sgw,Route,get_engine as get_engine_original
 from src.config import config
+
+@st.cache_resource
+def get_engine() -> Engine:
+    print("创建数据处理engine")
+    return get_engine_original()
 
 def add_business(
         qos:int,
@@ -18,7 +24,7 @@ def add_business(
         rate:int,
         loss:float,
         disorder:float
-    ):
+    ) -> None:
     with Session(get_engine()) as session:
         if src_name>dst_name:
             src_name,dst_name=dst_name,src_name
@@ -84,7 +90,7 @@ def add_business(
         
         session.commit()
         
-def get_link_latest_states_iter() -> List[Dict[str, Union[float,str]]]:
+def get_link_latest_states_iter() -> pd.DataFrame:
     with Session(get_engine()) as session:
         subquary = (
             select(SgwLinkState,func.max(SgwLinkState.create_datetime))
@@ -118,9 +124,10 @@ def get_link_latest_states_iter() -> List[Dict[str, Union[float,str]]]:
                 "吞吐量(bit/s)":'-' if rate is None else rate,
                 "丢包率(%)":'-' if lost is None else lost,
             }
-        return list(map(__to_row,results))
+        return pd.DataFrame(map(__to_row,results))
 
-def get_all_route() -> List[Dict[str, Union[float,str]]]:
+@st.cache_data
+def get_all_route() -> pd.DataFrame:
     with Session(get_engine()) as session:
         routes=session.exec(select(Route)).all()
         def __to_row(route:Route):
@@ -133,9 +140,9 @@ def get_all_route() -> List[Dict[str, Union[float,str]]]:
                 '流量等级':route.qos,
                 '路由':__phase_route(int(i) for i in route.route.split(','))
             }
-        return list(map(__to_row,routes))
-    
-def get_route_by_host(src:Host,dst:Host,qos:int):
+        return pd.DataFrame(map(__to_row,routes))
+
+def get_route_by_host(src:Host,dst:Host,qos:int) -> str:
     with Session(get_engine()) as session:
         assert isinstance(src.cpe,Cpe)
         assert isinstance(dst.cpe,Cpe)
@@ -143,6 +150,7 @@ def get_route_by_host(src:Host,dst:Host,qos:int):
         route=session.exec(statement).one()
         return __phase_route(map(int,route.split(',')))
 
+@st.cache_data
 def __phase_route(ids:Iterable[int]) -> str:
     names:list[str]=[]
     with Session(get_engine()) as session:
@@ -152,8 +160,7 @@ def __phase_route(ids:Iterable[int]) -> str:
             names.append(name)
         return ' → '.join(names)
         
-
-def get_bussiness()->List[Dict]:
+def get_bussiness()->pd.DataFrame:
     with Session(get_engine()) as session:
         bussinesses=session.exec(select(Business)).all()
         def __to_row(bussiness:Business):
@@ -173,7 +180,7 @@ def get_bussiness()->List[Dict]:
                 '流量等级':bussiness.qos,
                 '路由':get_route_by_host(bussiness.src_host,bussiness.dst_host,bussiness.qos)
             }
-        return list(map(__to_row,bussinesses))
+        return pd.DataFrame(map(__to_row,bussinesses))
 
 if __name__ == "__main__":
     add_business(0,'162',5165,'166',1234,546546,0,0,0)

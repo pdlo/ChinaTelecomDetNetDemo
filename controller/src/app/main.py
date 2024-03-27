@@ -1,10 +1,7 @@
 """
-1. 所有业务的状态，对应的路由
-2. 所有int数据
+负责进行页面布局，接收用户输入
 """
 import streamlit as st
-from sqlmodel import select,Session
-import pandas as pd
 from datetime import datetime,timedelta
 from pathlib import Path
 import sys
@@ -16,45 +13,46 @@ from src.app.read_db import get_link_latest_states_iter,get_all_route,get_bussin
 
 page_title="基于业务感知和控制的确定性网络关键技术研究与验证项目实验与演示系统"
 
+
 if "config_seted" not in st.session_state:
     st.session_state["config_seted"]=True
     st.set_page_config(
         page_title=page_title,
-        layout="wide",
-        initial_sidebar_state="expanded",
     )
 
-# st.header(page_title)
+st.subheader("实验网络拓扑")
+topo_empty=st.empty()
+topo_empty.warning("加载中")
 
-st.write("---")
+st.subheader("网络状态")
+state_empty=st.empty()
+state_empty.warning("加载中")
 
-col1,col2,col3=st.columns([4,3,3])
+st.subheader("路由")
+route_empty=st.empty()
+route_empty.warning("加载中")
 
-with col1:
-    st.subheader("实验网络拓扑")
+st.subheader('业务编辑')
+add_business_empty=st.empty()
+add_business_empty.warning("加载中")
+
+st.subheader("当前业务")
+show_business_empty=st.empty()
+show_business_empty.warning("加载中")
+
+with topo_empty:
     image_path=root.parent/'docs'/'实验拓扑.png'
     st.image(str(image_path))
 
-with col2:
-    st.subheader("网络状态")
-    int_table_container=st.empty()
-
-with col3:
-    st.subheader("路由")
-    route_df=pd.DataFrame(get_all_route())
+with route_empty:
+    route_df=get_all_route()
     st.dataframe(
         route_df,
         hide_index=True,
         use_container_width=True,
     )
 
-
-col1,col2=st.columns([5,5])
-with col1:
-    st.subheader("业务")
-    bussiness_container=st.empty()
-
-with col2:
+with add_business_empty:
     with st.form("添加业务(部分功能尚未实现)"):
         inner_col1,inner_col2 = st.columns(2)
         with inner_col1:
@@ -77,17 +75,13 @@ with col2:
             }
             need = st.selectbox("时延需求(ms)",delay_to_qos.keys(),3)
             qos,delay=(0,0) if need is None else delay_to_qos[need]
-            st.write(qos,delay)
             assert isinstance(qos,int)
-            st.number_input("时延需求(μs)",step=1)
             rate=st.number_input("带宽需求(byte/s)",disabled=True,step=1)
         with inner_col2:
             loss=st.number_input("丢包率需求(%)",disabled=True)
             disorder=st.number_input("乱序需求(%)",disabled=True)
 
         if st.form_submit_button("添加/修改"):
-            bussiness_container.warning("流表下发中，请稍候。")
-            int_table_container.warning("流表下发中，请稍候。")
             try:
                 add_business(
                     qos,
@@ -101,28 +95,27 @@ with col2:
                     disorder
                 )
             except Exception as e:
-                # st.error(str(e))
-                raise e
+                st.error(str(e))
+                # raise e
 
-
-business_df=pd.DataFrame(get_bussiness())
-bussiness_container.dataframe(
-    business_df,
-    hide_index=True,
-    use_container_width=True,
-)
-
-
+with show_business_empty:
+    business_df=get_bussiness()
+    st.dataframe(
+        business_df,
+        hide_index=True,
+        use_container_width=True,height=400
+    )
+    
 last_schedule_time=datetime.min
+
 while True:
     now_time=datetime.now()
     if now_time-last_schedule_time < timedelta(seconds=5):
         continue
     last_schedule_time=now_time
-    container = int_table_container.container()
-    with container:
+    with state_empty.container():
         st.write(datetime.now().strftime("最后更新于 %Y.%m.%d %H:%M:%S"))
-        state_df=pd.DataFrame(get_link_latest_states_iter())
+        state_df=get_link_latest_states_iter()
         st.dataframe(
             state_df,
             hide_index=True,

@@ -17,7 +17,44 @@ pdm install
 streamlit ./src/app/main.py
 ```
 
+
+
+## cpe启动过程 by GZC
+
+目前cpe为tofino交换机151，152，153。
+
+**以下操作都在my_p4/srv6/目录下执行。**
+
+### 编译
+
+```
+bash compile.sh
+```
+
+(p4程序不改变，编译命令只需运行一次即可)
+
+### 开启bfshell和交换机端口
+
+```
+bash run.sh 
+```
+
+这个脚本包含开启bfshell和插入端口，完成后将会话隐藏在后端，保持交换机一直开启。
+
+### 执行hping3脚本
+
+**脚本文件在/home/sinet/目录下，名称为hping3_script.sh。流表下发成功后执行命令。**
+
+```
+bash hping3_script.sh <源端口> <目的端口> <目的IP>
+```
+
+执行后输出rtt往返时延。
+
+
+
 ## 地址设置规定(暂定)
+
 ### 管理ssh地址
 1. 实验拓扑中所有设备都有一个设备号，150~190
 2. 设备号与ssh地址有关，安全起见，具体请询问组内人员

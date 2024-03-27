@@ -46,7 +46,7 @@ for i in hosts:
 #对于route表的每一行，下发select_srv6_path
 routes = hosts=session.exec(select(Route)).all()
 for i in routes:
-    print(f"\n\n下发{i.name} 流表\n")
+    print(f"\n\n下发{i.src_cpe.name} -> {i.dst_cpe.name}流表\n")
     src_cpe = session.exec(select(Cpe).where(Cpe.id==i.src_cpe_id)).one()
     dst_cpe = session.exec(select(Cpe).where(Cpe.id==i.dst_cpe_id)).one()
     code = cpe_table.select_srv6_path.add_with_srv6_insert(

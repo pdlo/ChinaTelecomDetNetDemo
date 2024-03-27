@@ -11,7 +11,7 @@ from collections import defaultdict
 from sqlmodel import select,Session
 from pathlib import Path
 
-log_path=Path(__file__).parent.parent/'log'
+log_path=Path(__file__).parent.parent.parent/'log'
 
 codes=defaultdict(list)
 stdouts=defaultdict(list)

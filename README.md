@@ -1,7 +1,9 @@
-## 0328 演示系统移植 - 控制器代码安装和启动方式
+## 0328 演示系统
+从github克隆整个仓库
+### 控制器 安装和启动 by WXY
 以下所有命令的工作目录都是/controller。
 代码基于python3。
-### 安装
+### 安装依赖
 ```bash
 sudo apt install python3.8-venv
 sudo apt install pipx
@@ -10,8 +12,13 @@ pdm venv create
 pdm install
 ```
 ### 配置
-复制example_config.toml，改名为config.toml
-把其中的账号密码改成真实值（因为不能把它放到github上）
+1. 复制example_config.toml，改名为config.toml
+    - 把其中的账号密码改成真实值（因为不能把它放到github上）
+2. 建表
+```bash
+python -m src.orm
+sqlite3 database.db < ./src/网络拓扑.sql
+```
 
 ### 启动
 ```bash
@@ -19,18 +26,12 @@ pdm venv activate
 #下发初始流表
 python -m src.cpe_table
 #启动int
-
+python -m src.int.send
+python -m src.int.receive
 #启动展示页面
 streamlit run ./src/app/main.py --server.address 0.0.0.0 --server.port 8888
-
 ```
 重复，以上命令请在 /controller 下执行
-
-## cpe代码安装和启动
-
-
-
-
 ## cpe启动过程 by GZC
 
 目前cpe为tofino交换机151，152，153。

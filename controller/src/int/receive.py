@@ -63,7 +63,7 @@ def handle_pkt(pkt):
                         link_id=sgw_link.id,
                         create_datetime=datetime.now(),
                         delay=int(delay),
-                        rate=int(Throughput*100000),
+                        rate=int(Throughput*1000000),
                         lost=float(Packet_Loss_Rate)
                     )
                     session.add(link_state)

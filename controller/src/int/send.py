@@ -14,7 +14,7 @@ def get_if():
     ifs = get_if_list()
     iface = None
     for i in get_if_list():
-        if "eth0" in i:
+        if "eth1" in i:
             iface = i
             break
     if not iface:

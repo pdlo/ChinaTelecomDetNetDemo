@@ -5,11 +5,12 @@ import streamlit as st
 from datetime import datetime,timedelta
 from pathlib import Path
 import sys
+from typing import Tuple,Union,Dict
 
 root=Path(__file__).parent.parent.parent
 sys.path.append(str(root))
 
-from src.app.read_db import get_link_latest_states_iter,get_all_route,get_bussiness,add_business
+from src.app.read_db import get_latest_link_states,get_all_routes,get_bussiness,add_business
 
 page_title="基于业务感知和控制的确定性网络关键技术研究与验证项目实验与演示系统"
 
@@ -45,7 +46,7 @@ with topo_empty:
     st.image(str(image_path))
 
 with route_empty:
-    route_df=get_all_route()
+    route_df=get_all_routes()
     st.dataframe(
         route_df,
         hide_index=True,
@@ -67,16 +68,18 @@ with add_business_empty:
 
         inner_col1,inner_col2 = st.columns(2)
         with inner_col1:
-            delay_to_qos={
-                '0 ~ 20':(2,10),
+            delay_to_qos:Dict[str,Tuple[int,Union[int,None]]]={
+                '0 ~ 20':(2,20),
                 '20 ~ 40':(1,40),
                 '40 ~ 60':(0,60),
-                '无限制':(0,0)
+                '无限制':(0,None)
             }
             need = st.selectbox("时延需求(ms)",delay_to_qos.keys(),3)
-            qos,delay=(0,0) if need is None else delay_to_qos[need]
-            assert isinstance(qos,int)
+            if need is None:
+                need='无限制'
+            qos,delay=delay_to_qos[need]
             rate=st.number_input("带宽需求(byte/s)",disabled=True,step=1)
+            rate=int(rate)
         with inner_col2:
             loss=st.number_input("丢包率需求(%)",disabled=True)
             disorder=st.number_input("乱序需求(%)",disabled=True)
@@ -90,7 +93,7 @@ with add_business_empty:
                     dst_name,
                     int(dst_port),
                     delay,
-                    int(rate),
+                    rate,
                     loss,
                     disorder
                 )
@@ -115,7 +118,7 @@ while True:
     last_schedule_time=now_time
     with state_empty.container():
         st.write(datetime.now().strftime("最后更新于 %Y.%m.%d %H:%M:%S"))
-        state_df=get_link_latest_states_iter()
+        state_df=get_latest_link_states()
         st.dataframe(
             state_df,
             hide_index=True,

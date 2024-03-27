@@ -1,6 +1,6 @@
 from sqlalchemy import Engine
 from sqlmodel import select,Session,func
-from typing import Sequence
+from typing import Sequence,Union
 from sqlalchemy.exc import NoResultFound
 import streamlit as st 
 import pandas as pd
@@ -20,11 +20,20 @@ def add_business(
         src_port:int,
         dst_name:str,
         dst_port:int,
-        delay:int,
-        rate:int,
-        loss:float,
-        disorder:float
+        delay:Union[int,None],
+        rate:Union[int,None],
+        loss:Union[float,None],
+        disorder:Union[float,None]
     ) -> None:
+    if delay==0:
+        delay=None
+    if rate==0:
+        rate=None
+    if loss==0:
+        loss=None
+    if disorder==0:
+        disorder=None
+
     with Session(get_engine()) as session:
         if src_name>dst_name:
             src_name,dst_name=dst_name,src_name
@@ -90,7 +99,7 @@ def add_business(
         
         session.commit()
         
-def get_link_latest_states_iter() -> pd.DataFrame:
+def get_latest_link_states() -> pd.DataFrame:
     with Session(get_engine()) as session:
         subquary = (
             select(SgwLinkState,func.max(SgwLinkState.create_datetime))
@@ -121,13 +130,13 @@ def get_link_latest_states_iter() -> pd.DataFrame:
                 '序号':link.id,
                 '连接':f"{link.src_sgw.name} - {link.dst_sgw.name}",
                 "时延(ms)":'-' if delay is None else delay/1000,
-                "吞吐量(bit/s)":'-' if rate is None else rate,
+                "吞吐量(byte/s)":'-' if rate is None else rate,
                 "丢包率(%)":'-' if lost is None else lost,
             }
         return pd.DataFrame(map(__to_row,results))
 
 @st.cache_data
-def get_all_route() -> pd.DataFrame:
+def get_all_routes() -> pd.DataFrame:
     with Session(get_engine()) as session:
         routes=session.exec(select(Route)).all()
         def __to_row(route:Route):
@@ -167,16 +176,17 @@ def get_bussiness()->pd.DataFrame:
             assert isinstance(bussiness.src_host,Host)
             assert isinstance(bussiness.dst_host,Host)
             assert isinstance(bussiness.qos,int)
+            make_placeholder = lambda x:'-' if x is None else x
             return {
                 '序号':bussiness.id,
                 "源主机":bussiness.src_host.name,
-                '目的端口':bussiness.src_port,
+                '源端口':bussiness.src_port,
                 "目的主机":bussiness.dst_host.name,
                 '目的端口':bussiness.dst_port,
-                '时延需求(μs)':'-' if bussiness.loss is None else bussiness.delay,
-                '带宽需求(bit/s)':'-' if bussiness.loss is None else bussiness.rate,
-                '丢包率需求':'-' if bussiness.loss is None else f"{bussiness.loss*100}%",
-                "乱序需求":'-' if bussiness.loss is None else bussiness.disorder,
+                '时延需求(μs)':make_placeholder(bussiness.delay),
+                '带宽需求':make_placeholder(bussiness.rate),
+                '丢包率需求':make_placeholder(bussiness.loss),
+                "乱序需求":make_placeholder(bussiness.disorder),
                 '流量等级':bussiness.qos,
                 '路由':get_route_by_host(bussiness.src_host,bussiness.dst_host,bussiness.qos)
             }

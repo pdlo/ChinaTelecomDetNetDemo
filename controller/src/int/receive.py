@@ -42,10 +42,10 @@ def handle_pkt(pkt):
                 Throughput = 1.0 * probe_data_layers[i].egress_byte_cnt / (probe_data_layers[i].egress_cur_time - probe_data_layers[i].egress_last_time)
                 delay = (probe_data_layers[i].egress_cur_time - probe_data_layers[i - 1].egress_cur_time) * 10 ** -6
                 delay = abs(delay)
-                Packet_Loss_Rate = 1.0 * (probe_data_layers[i].egress_packet_count - probe_data_layers[i - 1].egress_packet_count) / probe_data_layers[i].egress_packet_count * 100
+                Packet_Loss_Rate = 1.0 * (probe_data_layers[i].egress_packet_count - probe_data_layers[i - 1].ingress_packet_count) / probe_data_layers[i].egress_packet_count * 100
                 print("Switch{} Port{} Switch{} Port{}    Throughput:{}MBps delay:{}s Packet_Loss_Rate:{}%".format(
                     probe_data_layers[i].swid, probe_data_layers[i].egress_port,
-                    probe_data_layers[i - 1].swid, probe_data_layers[i - 1].egress_port,
+                    probe_data_layers[i - 1].swid, probe_data_layers[i - 1].ingress_port,
                     Throughput, delay, Packet_Loss_Rate))
 
                 swid_1 = probe_data_layers[i].swid

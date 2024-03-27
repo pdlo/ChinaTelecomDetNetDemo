@@ -1,8 +1,8 @@
 #映射
-def mapping(delay):
+def mapping_to_qos(delay):
     if delay <= 30:
-        return 3
-    elif 30 <= delay <= 40:
         return 2
-    else:
+    elif 30 <= delay <= 40:
         return 1
+    else:
+        return 0

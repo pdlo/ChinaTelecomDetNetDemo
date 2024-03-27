@@ -1,3 +1,22 @@
+## 0328 演示系统移植和启动方式 by WXY
+以下所有命令的工作目录都是/controller。
+代码基于python3。
+### 安装
+```
+sudo apt install pipx
+pipx install pdm
+pdm venv create
+pdm install
+```
+### 配置
+复制example_config.toml，改名为config.toml
+把其中的账号密码改成真实值（因为不能把它放到github上）
+
+### 启动
+```bash
+streamlit ./src/app/main.py
+```
+
 ## 地址设置规定(暂定)
 ### 管理ssh地址
 1. 实验拓扑中所有设备都有一个设备号，150~190

@@ -4,6 +4,7 @@ controller/database.db
 **\.~vsdx
 .venv
 .vscode
+**\log
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

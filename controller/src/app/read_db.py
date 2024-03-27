@@ -1,6 +1,6 @@
 from sqlalchemy import Engine
 from sqlmodel import select,Session,func
-from typing import Iterable
+from typing import Sequence
 from sqlalchemy.exc import NoResultFound
 import streamlit as st 
 import pandas as pd
@@ -138,7 +138,7 @@ def get_all_route() -> pd.DataFrame:
                 '源主机':route.src_cpe.name,
                 '目的主机':route.dst_cpe.name,
                 '流量等级':route.qos,
-                '路由':__phase_route(int(i) for i in route.route.split(','))
+                '路由':__phase_route([int(i) for i in route.route.split(',')])
             }
         return pd.DataFrame(map(__to_row,routes))
 
@@ -148,10 +148,10 @@ def get_route_by_host(src:Host,dst:Host,qos:int) -> str:
         assert isinstance(dst.cpe,Cpe)
         statement=select(Route.route).where(Route.src_cpe_id == src.cpe_id,Route.dst_cpe_id==dst.cpe_id,Route.qos==qos)
         route=session.exec(statement).one()
-        return __phase_route(map(int,route.split(',')))
+        return __phase_route([int(i) for i in route.split(',')])
 
 @st.cache_data
-def __phase_route(ids:Iterable[int]) -> str:
+def __phase_route(ids:Sequence[int]) -> str:
     names:list[str]=[]
     with Session(get_engine()) as session:
         for id in ids:

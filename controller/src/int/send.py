@@ -2,7 +2,7 @@
 import sys
 import time
 from scapy.all import get_if_list, get_if_hwaddr, Ether, IPv6, sendp
-from headers_definition import srv6h, srv6_list_1, srv6_list_2, srv6_list_3, srv6_list_4, srv6_list_5, probe_header
+from src.int.headers_definition import srv6h, srv6_list_1, srv6_list_2, srv6_list_3, srv6_list_4, srv6_list_5, probe_header
 
 
 TYPE_IPV6 = 0x86dd

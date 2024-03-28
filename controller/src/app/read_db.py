@@ -4,10 +4,16 @@ from typing import Sequence,Union
 from sqlalchemy.exc import NoResultFound
 import streamlit as st 
 import pandas as pd
+from pathlib import Path
+from datetime import datetime
 
 from src.cpe_table import select_traffic_class
+from src.cpe_table.send_bfrt_python import send
+
 from src.orm import Cpe,Host,Business,SgwLink,SgwLinkState,Sgw,Route,get_engine as get_engine_original
 from src.config import config
+
+log_path=Path(__file__).parent.parent.parent/'logs'
 
 @st.cache_resource
 def get_engine() -> Engine:
@@ -77,28 +83,45 @@ def add_business(
             business.qos=qos
         session.add(business)
 
-        select_traffic_class.add_with_get_traffic_class(
+        src_cpe_code=select_traffic_class.add_with_get_traffic_class(
             src_cpe,
             src_ip=src.ip,
             src_port=src_port,
             dst_ip=dst.ip,
             dst_port=dst_port,
             qos=qos,
-            send_code=config['app']['send_table']
+            send_code=False
         )
-
-        select_traffic_class.add_with_get_traffic_class(
+        
+        dst_cpe_code=select_traffic_class.add_with_get_traffic_class(
             dst_cpe,
             src_ip=dst.ip,
             src_port=dst_port,
             dst_ip=src.ip,
             dst_port=src_port,
             qos=qos,
-            send_code=config['app']['send_table']
+            send_code=False
         )
+        with (log_path/f"CODE {src.name}-{src_port} to {dst.name}-{dst_port} {qos=}.py").open('w') as f:
+            f.write('\n'.join([
+                src_cpe_code,
+                "\n=======================================================\n\n",
+                dst_cpe_code
+                ]))
         
+        if config['app']['send_table']:
+            with (log_path/f"STDOUT {src.name}-{src_port} to {dst.name}-{dst_port}  {qos=}.log").open('w') as f:
+                stdout1 = send(src_cpe,src_cpe_code)
+                stdout2 = send(dst_cpe,dst_cpe_code)
+                f.write('\n'.join([
+                    datetime.now().isoformat(),
+                    f"\n#{src_cpe.name}\n",
+                    stdout1,
+                    f"\n#{dst_cpe.name}\n",
+                    stdout2,
+                    ]))
         session.commit()
-        
+
 def get_latest_link_states() -> pd.DataFrame:
     with Session(get_engine()) as session:
         subquary = (
@@ -183,7 +206,7 @@ def get_bussiness()->pd.DataFrame:
                 '源端口':bussiness.src_port,
                 "目的主机":bussiness.dst_host.name,
                 '目的端口':bussiness.dst_port,
-                '时延需求(μs)':make_placeholder(bussiness.delay),
+                '时延需求(ms)':make_placeholder(bussiness.delay),
                 '带宽需求':make_placeholder(bussiness.rate),
                 '丢包率需求':make_placeholder(bussiness.loss),
                 "乱序需求":make_placeholder(bussiness.disorder),
@@ -194,4 +217,3 @@ def get_bussiness()->pd.DataFrame:
 
 if __name__ == "__main__":
     add_business(0,'162',5165,'166',1234,546546,0,0,0)
-    print(get_bussiness()[0]['时延需求(μs)'])

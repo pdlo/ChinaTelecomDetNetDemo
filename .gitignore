@@ -1,12 +1,12 @@
 controller/database.db
 controller/database.db-journal
+controller/logs
 
-**\.log
+**\*.log
 **\__pycache__
 **\.~vsdx
 .venv
 .vscode
-**\log
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

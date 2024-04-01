@@ -1,0 +1,15 @@
+
+table_add ipv6_lpm ipv6_forward 0000:0152:0000:0000:0000:0000:0000:0000/128 => 08:00:00:00:02:22 3
+table_add ipv6_lpm ipv6_forward 0000:0185:0000:0000:0000:0000:0000:0000/128 => a0:36:9f:a8:5c:b8 1
+table_add ipv6_lpm ipv6_forward 0000:0181:0000:0000:0000:0000:0000:0000/128 => a0:36:9f:ed:5c:62 2
+table_add ipv6_lpm ipv6_forward 0000:0183:0000:0000:0000:0000:0000:0000/128 => a0:36:9f:ed:5c:63 4
+
+
+table_add swid set_swid 0x86dd => 4 
+table_add swid set_swid 0x0812 => 4
+
+table_add ipv6_lpm_INT_inteval ipv6_forward 0000:0181:0000:0000:0000:0000:0000:0000/128 => a0:36:9f:ed:5c:62 2
+table_add ipv6_lpm_INT_inteval ipv6_forward 0000:0183:0000:0000:0000:0000:0000:0000/128 => a0:36:9f:ed:5c:68 4
+table_add ipv6_lpm_INT_inteval ipv6_forward 0000:0185:0000:0000:0000:0000:0000:0000/128 => a0:36:9f:ed:5c:69 1
+
+

@@ -1,0 +1,2 @@
+table_add ipv6_lpm ipv6_forward ::128/128 => 00:00:00:00:00:02 2
+table_add srv6_forward srv6forward 0x86dd =>

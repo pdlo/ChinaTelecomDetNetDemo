@@ -1,0 +1,36 @@
+{ "p4_src": "middle.p4",
+  "cli": true,
+  "pcap_dump": true,
+  "enable_log": true,
+  "topology": {
+    "assignment_strategy": "mixed",
+    "links": [["h1", "s1"],["s1", "s2"] ,["s2", "s3"],["s3", "h2"]],
+    "hosts": {
+      "h1": {
+
+   
+      		
+      },
+      "h2": {
+
+   
+      		
+      }
+    },
+    "switches": {
+      "s1": {
+        "cli_input": "s1-commands.txt",
+        "p4_src": "start_end.p4" 
+        
+      },
+      "s2": {
+        "cli_input": "s2-commands.txt",
+        "p4_src": "middle.p4" 
+      },
+      "s3": {
+        "cli_input": "s3-commands.txt",
+        "p4_src": "start_end.p4" 
+      }
+    }
+  }
+}

@@ -141,8 +141,8 @@ struct ingress_headers {
 *************************************************************************/
 parser IngressParser(packet_in packet,
                 out ingress_headers hdr,
-                inout ingress_metadata meta,
-                inout ingress_intrinsic_metadata_t ig_intr_md) {
+                out ingress_metadata meta,
+                out ingress_intrinsic_metadata_t ig_intr_md) {
 
     state start {
         meta = {0,0,0,0,0,0,0,0,0,0};
@@ -258,7 +258,7 @@ control Ingress(inout ingress_headers hdr,
             packet_cnt=packet_cnt+1;
         }
     };
-    RegisterAction<bit<32>,bit<32>,bit<32>>(byte_cnt_reg) packet_cnt_reg_read = {
+    RegisterAction<bit<32>,bit<32>,bit<32>>(packet_cnt_reg) packet_cnt_reg_read = {
         void apply(inout bit<32> packet_cnt,out bit<32> read_val){
             read_val=packet_cnt;
             packet_cnt=0;
@@ -266,12 +266,12 @@ control Ingress(inout ingress_headers hdr,
     };
     //时间计数器
     Register <bit<48>,bit<32>>(50,0) last_time_reg;
-    RegisterAction<bit<48>,bit<32>,bit<48>>(byte_cnt_reg) last_time_reg_read = {
+    RegisterAction<bit<48>,bit<32>,bit<48>>(last_time_reg) last_time_reg_read = {
         void apply(inout bit<48> last_time,out bit<48> read_val){
             read_val=last_time;
         }
     };
-    RegisterAction<bit<32>,bit<32>,bit<32>>(byte_cnt_reg) last_time_reg_update = {
+    RegisterAction<bit<48>,bit<32>,bit<48>>(last_time_reg) last_time_reg_update = {
         void apply(inout bit<48> last_time,out bit<48> read_val){
             last_time=ig_prsr_md.global_tstamp;
         }
@@ -883,7 +883,7 @@ control Egress(inout egress_headers hdr,
     Register <bit<32>,bit<32>>(50,0) byte_cnt_reg_out;
     RegisterAction<bit<32>,bit<32>,bit<32>>(byte_cnt_reg_out) byte_cnt_reg_accumulate_out = {
         void apply(inout bit<32> byte_cnt,out bit<32> read_val){
-            byte_cnt=byte_cnt+ig_intr_md.pkt_length;
+            byte_cnt=byte_cnt+eg_intr_md.pkt_length;
         }
     };
     RegisterAction<bit<32>,bit<32>,bit<32>>(byte_cnt_reg_out) byte_cnt_reg_read_out = {
@@ -899,7 +899,7 @@ control Egress(inout egress_headers hdr,
             packet_cnt=packet_cnt+1;
         }
     };
-    RegisterAction<bit<32>,bit<32>,bit<32>>(byte_cnt_reg_out) packet_cnt_reg_read_out = {
+    RegisterAction<bit<32>,bit<32>,bit<32>>(packet_cnt_reg_out) packet_cnt_reg_read_out = {
         void apply(inout bit<32> packet_cnt,out bit<32> read_val){
             read_val=packet_cnt;
             packet_cnt=0;
@@ -907,12 +907,12 @@ control Egress(inout egress_headers hdr,
     };
     //时间计数器
     Register <bit<48>,bit<32>>(50,0) last_time_reg_out;
-    RegisterAction<bit<48>,bit<32>,bit<48>>(byte_cnt_reg_out) last_time_reg_read_out = {
+    RegisterAction<bit<48>,bit<32>,bit<48>>(last_time_reg_out) last_time_reg_read_out = {
         void apply(inout bit<48> last_time,out bit<48> read_val){
             read_val=last_time;
         }
     };
-    RegisterAction<bit<32>,bit<32>,bit<32>>(byte_cnt_reg_out) last_time_reg_update_out = {
+    RegisterAction<bit<48>,bit<32>,bit<48>>(last_time_reg_out) last_time_reg_update_out = {
         void apply(inout bit<48> last_time,out bit<48> read_val){
             last_time=eg_intr_prsr_md.global_tstamp;
         }
@@ -1170,8 +1170,8 @@ control Egress(inout egress_headers hdr,
 
 control EgressDeparser(packet_out pkt,
     /* User */
-    inout my_egress_headers_t hdr,
-    in egress_metadata_t meta,
+    inout egress_headers hdr,
+    in egress_metadata meta,
     /* Intrinsic */
     in egress_intrinsic_metadata_for_deparser_t eg_intr_dprsr_md)
 {

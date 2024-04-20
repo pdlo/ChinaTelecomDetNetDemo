@@ -273,7 +273,7 @@ control Ingress(inout ingress_headers hdr,
     };
     RegisterAction<bit<48>,bit<32>,bit<48>>(last_time_reg) last_time_reg_update = {
         void apply(inout bit<48> last_time,out bit<48> read_val){
-            last_time=ig_prsr_md.global_tstamp;
+            last_time=ig_intr_prsr_md.global_tstamp;
         }
     };
     action drop() {
@@ -918,7 +918,7 @@ control Egress(inout egress_headers hdr,
         }
     };
     action drop_out() {
-        mark_to_drop(eg_intr_dprsr_md.drop_ctl);
+        eg_intr_dprsr_md.drop_ctl=1;
     }
     action determine_the_index_of_packet_out(bit<32> target){
         meta.index=target;

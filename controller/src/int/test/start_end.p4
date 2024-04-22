@@ -113,7 +113,7 @@ struct ingress_metadata {
     bit<8> segment_left;
     bit<8> num_segments;  //用于后面改变srv6长度，就是指定要加几个srv6list
     bit<8> trafficclass;   //服务等级
-    bit<8> reminging;  //用来在提取srv6list的时候作为中介
+    bit<16> reminging;  //用来在提取srv6list的时候作为中介
     bit<8> remaining1;//用来在提取prodadata的时候作为中介
    /*  bit<8> the_type_of_route_this_packet_choose; //来表明这个包走的具体路径，以便后面知道往寄存器的哪一个地方填信息 */
     bit<128> s1;
@@ -314,7 +314,8 @@ control Ingress(inout ingress_headers hdr,
     Register <bit<32>,bit<32>>(50,0) byte_cnt_reg;
     RegisterAction<bit<32>,bit<32>,bit<32>>(byte_cnt_reg) byte_cnt_reg_accumulate = {
         void apply(inout bit<32> byte_cnt,out bit<32> read_val){
-            byte_cnt=byte_cnt+ (bit<32>)hdr.ipv6.payload_len+54;
+            read_val=123; 
+            byte_cnt=byte_cnt+ (bit<32>)hdr.ipv6.payload_len+54; //准确得出每个普通数据包的大小
         }
     };
     RegisterAction<bit<32>,bit<32>,bit<32>>(byte_cnt_reg) byte_cnt_reg_read = {
@@ -327,6 +328,7 @@ control Ingress(inout ingress_headers hdr,
     Register <bit<32>,bit<32>>(50,0) packet_cnt_reg;
     RegisterAction<bit<32>,bit<32>,bit<32>>(packet_cnt_reg) packet_cnt_reg_accumulate = {
         void apply(inout bit<32> packet_cnt,out bit<32> read_val){
+            read_val=123;
             packet_cnt=packet_cnt+1;
         }
     };
@@ -337,15 +339,16 @@ control Ingress(inout ingress_headers hdr,
         }
     };
     //时间计数器
-    Register <bit<32>,bit<32>>(50,0) last_time_reg;
-    RegisterAction<bit<32>,bit<32>,bit<32>>(last_time_reg) last_time_reg_read = {
-        void apply(inout bit<32> last_time,out bit<32> read_val){
+    Register <bit<64>,bit<32>>(50,0) last_time_reg;
+    RegisterAction<bit<64>,bit<32>,bit<64>>(last_time_reg) last_time_reg_read = {
+        void apply(inout bit<64> last_time,out bit<64> read_val){
             read_val=last_time;
         }
     };
-    RegisterAction<bit<32>,bit<32>,bit<32>>(last_time_reg) last_time_reg_update = {
-        void apply(inout bit<32> last_time,out bit<32> read_val){
-            last_time=(bit<32>)ig_intr_prsr_md.global_tstamp;
+    RegisterAction<bit<64>,bit<32>,bit<64>>(last_time_reg) last_time_reg_update = {
+        void apply(inout bit<64> last_time,out bit<64> read_val){
+            read_val=123;
+            last_time=(bit<64>)ig_intr_prsr_md.global_tstamp;
         }
     };
     action drop() {
@@ -378,7 +381,9 @@ control Ingress(inout ingress_headers hdr,
         hdr.srv6h.tag = 0;
 
 
-        hdr.ipv6.payload_len = hdr.ipv4.totalLen + 8+16*(bit<16>)num_segments;  //8+16*5=88
+        //hdr.ipv6.payload_len = hdr.ipv4.totalLen + 8+16*(bit<16>)num_segments;  
+        /* meta.reminging=(bit<16>)num_segments << 4; */
+        hdr.ipv6.payload_len = hdr.ipv4.totalLen + 88; 
 
         meta.num_segments = num_segments;
 
@@ -410,12 +415,21 @@ control Ingress(inout ingress_headers hdr,
         hdr.ethernet.srcAddr=hdr.ethernet.dstAddr;
         hdr.ethernet.dstAddr=dstmacaddr;
     }
-    action srv6_forward() {
-        hdr.ipv6.dst_addr = hdr.srv6_list[meta.segment_left].segment_id;
+    //总共srv6list会是3，4，5，对于首尾两个交换机而言，尾部交换机收到的SG肯定是0，而头部交换机收到的sg可能是2，3，4
+    action srv6_forward_start_for_3list() {
+        hdr.ipv6.dst_addr = hdr.srv6_list[2].segment_id;
+        hdr.srv6h.segment_left = hdr.srv6h.segment_left - 1;
+    }
+    action srv6_forward_start_for_4list() {
+        hdr.ipv6.dst_addr = hdr.srv6_list[3].segment_id;
+        hdr.srv6h.segment_left = hdr.srv6h.segment_left - 1;
+    }
+    action srv6_forward_start_for_5list() {
+        hdr.ipv6.dst_addr = hdr.srv6_list[4].segment_id;
         hdr.srv6h.segment_left = hdr.srv6h.segment_left - 1;
     }
     action srv6_forward_for_last_packet(){
-        hdr.ipv6.dst_addr = hdr.srv6_list[meta.segment_left].segment_id;
+        hdr.ipv6.dst_addr = hdr.srv6_list[0].segment_id;
     }
     table ipv6_lpm_normal_start {
         key = {
@@ -496,7 +510,7 @@ control Ingress(inout ingress_headers hdr,
         }
         default_action = NoAction();
     }
-    table swid_both {
+    /* table swid_both {
     	key = {
            hdr.ethernet.etherType: exact;       //第一个交换机中用，写一条流表项，键分别是INT的以太网类型/////change!!!!!!
         }
@@ -505,7 +519,7 @@ control Ingress(inout ingress_headers hdr,
             NoAction;
         }
         default_action = NoAction();
-    }
+    } */
     table select_traffic_class{
         key = {
             hdr.ipv4.dstAddr: exact;
@@ -608,7 +622,7 @@ control Ingress(inout ingress_headers hdr,
         }
         default_action = drop();  
     }
-    table both_direction_for_INT_six_list_ingress{
+   /*  table both_direction_for_INT_six_list_ingress{
         key ={
             hdr.srv6_list[6].segment_id:exact;
             hdr.srv6_list[5].segment_id:exact;
@@ -623,9 +637,9 @@ control Ingress(inout ingress_headers hdr,
             drop();
         }
         default_action = drop();  
-    }
+    } */
 
-    table both_direction_for_INT_eight_list_ingress{
+   /*  table both_direction_for_INT_eight_list_ingress{
         key ={
             hdr.srv6_list[8].segment_id:exact;
             hdr.srv6_list[7].segment_id:exact;
@@ -642,7 +656,7 @@ control Ingress(inout ingress_headers hdr,
             drop();
         }
         default_action = drop();  
-    }
+    } */
     apply{
         if (hdr.arp.isValid()) {
             hdr.ethernet.dstAddr = hdr.ethernet.srcAddr;
@@ -700,7 +714,13 @@ control Ingress(inout ingress_headers hdr,
                 hdr.srv6_list[2].setValid();
                 hdr.srv6_list[2].segment_id = meta.s1;
             }
-            srv6_forward();
+            if(hdr.srv6h.segment_left==2){
+                srv6_forward_start_for_3list();
+            }else if(hdr.srv6h.segment_left==3){
+                srv6_forward_start_for_4list();
+            }else if(hdr.srv6h.segment_left==4){
+                srv6_forward_start_for_5list();
+            }
             ipv6_lpm_normal_start.apply();
             }else if(hdr.srv6h.isValid()&&hdr.srv6h.segment_left==0)
                 {//说明这是一个末尾数据包
@@ -814,45 +834,51 @@ control Ingress(inout ingress_headers hdr,
                     byte_cnt_reg.write(meta.index,0);   */
                /*  } */
                 if(hdr.srv6h.last_entry==4&&hdr.srv6h.segment_left!=4){
-                    hdr.probe_data.push_front(1);
-                    hdr.probe_data[0].setValid(); 
+                    /* hdr.probe_data.push_front(1); */
+                    hdr.probe_data[1].setValid(); 
                     swid_single_5.apply();
                     hdr.probe_header.num_probe_data=hdr.probe_header.num_probe_data+1;
-                    hdr.probe_data[0].cur_time=ig_intr_prsr_md.global_tstamp;
-                    hdr.probe_data[0].last_time=(bit<48>)last_time_reg_read.execute(meta.index);
+                    hdr.probe_data[1].cur_time=ig_intr_prsr_md.global_tstamp;
+                    hdr.probe_data[1].last_time=(bit<48>)last_time_reg_read.execute(meta.index);
                     last_time_reg_update.execute(meta.index);
 
-                    hdr.probe_data[0].packet_cnt=packet_cnt_reg_read.execute(meta.index);
+                    hdr.probe_data[1].packet_cnt=packet_cnt_reg_read.execute(meta.index);
                     
-                    hdr.probe_data[0].byte_cnt=byte_cnt_reg_read.execute(meta.index);
+                    hdr.probe_data[1].byte_cnt=byte_cnt_reg_read.execute(meta.index);
                 }else if(hdr.srv6h.last_entry==3&&hdr.srv6h.segment_left!=3){
-                    hdr.probe_data.push_front(1);
-                    hdr.probe_data[0].setValid(); 
+                    /* hdr.probe_data.push_front(1); */
+                    hdr.probe_data[1].setValid(); 
                     swid_single_4.apply();
                     hdr.probe_header.num_probe_data=hdr.probe_header.num_probe_data+1;
-                    hdr.probe_data[0].cur_time=ig_intr_prsr_md.global_tstamp;
-                    hdr.probe_data[0].last_time=(bit<48>)last_time_reg_read.execute(meta.index);
+                    hdr.probe_data[1].cur_time=ig_intr_prsr_md.global_tstamp;
+                    hdr.probe_data[1].last_time=(bit<48>)last_time_reg_read.execute(meta.index);
                     last_time_reg_update.execute(meta.index);
 
-                    hdr.probe_data[0].packet_cnt=packet_cnt_reg_read.execute(meta.index);
+                    hdr.probe_data[1].packet_cnt=packet_cnt_reg_read.execute(meta.index);
                     
-                    hdr.probe_data[0].byte_cnt=byte_cnt_reg_read.execute(meta.index);
+                    hdr.probe_data[1].byte_cnt=byte_cnt_reg_read.execute(meta.index);
                 }else if(hdr.srv6h.last_entry==2&&hdr.srv6h.segment_left!=2){
-                    hdr.probe_data.push_front(1);
-                    hdr.probe_data[0].setValid(); 
+                    /* hdr.probe_data.push_front(1); */
+                    hdr.probe_data[1].setValid(); 
                     swid_single_3.apply();
                     hdr.probe_header.num_probe_data=hdr.probe_header.num_probe_data+1;
-                    hdr.probe_data[0].cur_time=ig_intr_prsr_md.global_tstamp;
-                    hdr.probe_data[0].last_time=(bit<48>)last_time_reg_read.execute(meta.index);
+                    hdr.probe_data[1].cur_time=ig_intr_prsr_md.global_tstamp;
+                    hdr.probe_data[1].last_time=(bit<48>)last_time_reg_read.execute(meta.index);
                     last_time_reg_update.execute(meta.index);
 
-                    hdr.probe_data[0].packet_cnt=packet_cnt_reg_read.execute(meta.index);
+                    hdr.probe_data[1].packet_cnt=packet_cnt_reg_read.execute(meta.index);
                     
-                    hdr.probe_data[0].byte_cnt=byte_cnt_reg_read.execute(meta.index);
+                    hdr.probe_data[1].byte_cnt=byte_cnt_reg_read.execute(meta.index);
                 }
             }
             if(hdr.srv6h.segment_left!=0){
-                srv6_forward();
+                if(hdr.srv6h.segment_left==2){
+                    srv6_forward_start_for_3list();
+                }else if(hdr.srv6h.segment_left==3){
+                    srv6_forward_start_for_4list();
+                }else if(hdr.srv6h.segment_left==4){
+                    srv6_forward_start_for_5list();
+                }
                 ipv6_lpm_INT.apply();
             }
             if(hdr.srv6h.segment_left==0){
@@ -1093,6 +1119,7 @@ control Egress(inout egress_headers hdr,
     Register <bit<32>,bit<32>>(50,0) byte_cnt_reg_out;
     RegisterAction<bit<32>,bit<32>,bit<32>>(byte_cnt_reg_out) byte_cnt_reg_accumulate_out = {
         void apply(inout bit<32> byte_cnt,out bit<32> read_val){
+            read_val=123;
             byte_cnt=byte_cnt+(bit<32>)eg_intr_md.pkt_length;
         }
     };
@@ -1106,6 +1133,7 @@ control Egress(inout egress_headers hdr,
     Register <bit<32>,bit<32>>(50,0) packet_cnt_reg_out;
     RegisterAction<bit<32>,bit<32>,bit<32>>(packet_cnt_reg_out) packet_cnt_reg_accumulate_out = {
         void apply(inout bit<32> packet_cnt,out bit<32> read_val){
+            read_val=123;
             packet_cnt=packet_cnt+1;
         }
     };
@@ -1116,15 +1144,16 @@ control Egress(inout egress_headers hdr,
         }
     };
     //时间计数器
-    Register <bit<32>,bit<32>>(50,0) last_time_reg_out;
-    RegisterAction<bit<32>,bit<32>,bit<32>>(last_time_reg_out) last_time_reg_read_out = {
-        void apply(inout bit<32> last_time,out bit<32> read_val){
+    Register <bit<64>,bit<32>>(50,0) last_time_reg_out;
+    RegisterAction<bit<64>,bit<32>,bit<64>>(last_time_reg_out) last_time_reg_read_out = {
+        void apply(inout bit<64> last_time,out bit<64> read_val){
             read_val=last_time;
         }
     };
-    RegisterAction<bit<32>,bit<32>,bit<32>>(last_time_reg_out) last_time_reg_update_out = {
-        void apply(inout bit<32> last_time,out bit<32> read_val){
-            last_time=(bit<32>)eg_intr_prsr_md.global_tstamp;
+    RegisterAction<bit<64>,bit<32>,bit<64>>(last_time_reg_out) last_time_reg_update_out = {
+        void apply(inout bit<64> last_time,out bit<64> read_val){
+            read_val=123;
+            last_time=(bit<64>)eg_intr_prsr_md.global_tstamp;
         }
     };
     action drop_out() {
@@ -1136,7 +1165,7 @@ control Egress(inout egress_headers hdr,
     action set_swid_out(bit<8> swid) {
         hdr.probe_data[0].swid = swid;
     }
-    table both_direction_for_INT_six_list_egress{
+    /* table both_direction_for_INT_six_list_egress{
         key ={
             hdr.srv6_list[6].segment_id:exact;
             hdr.srv6_list[5].segment_id:exact;
@@ -1151,9 +1180,9 @@ control Egress(inout egress_headers hdr,
             drop_out();
         }
         default_action = drop_out();  
-    }
+    } */
 
-    table both_direction_for_INT_eight_list_egress{
+ /*    table both_direction_for_INT_eight_list_egress{
         key ={
             hdr.srv6_list[8].segment_id:exact;
             hdr.srv6_list[7].segment_id:exact;
@@ -1170,7 +1199,7 @@ control Egress(inout egress_headers hdr,
             drop_out();
         }
         default_action = drop_out();  
-    }
+    } */
     table which_array_to_fill_for_five_list_out_INT{
         key ={
             hdr.srv6_list[4].segment_id:exact;
@@ -1279,7 +1308,7 @@ control Egress(inout egress_headers hdr,
         }
         default_action = NoAction();
     }
-    table swid_out_both{
+    /* table swid_out_both{
     	key = {
            hdr.ethernet.etherType: exact;       //第一个交换机中用，写一条流表项，键分别是INT的以太网类型/////change!!!!!!
         }
@@ -1288,7 +1317,7 @@ control Egress(inout egress_headers hdr,
             NoAction;
         }
         default_action = NoAction();
-    }
+    } */
     apply {    
         if(hdr.ipv4.isValid()&&hdr.srv6h.isValid()){
             if(hdr.srv6h.last_entry==hdr.srv6h.segment_left+1){
@@ -1360,7 +1389,7 @@ control Egress(inout egress_headers hdr,
                     which_array_to_fill_for_three_list_out_INT.apply();
                 }
                 if(hdr.srv6h.last_entry==3&&hdr.srv6h.segment_left!=0){
-                    hdr.probe_data.push_front(1);
+                    /* hdr.probe_data.push_front(1); */
                     hdr.probe_data[0].setValid(); 
                     swid_out_single_4.apply();
                     hdr.probe_header.num_probe_data=hdr.probe_header.num_probe_data+1;
@@ -1372,7 +1401,7 @@ control Egress(inout egress_headers hdr,
                     
                     hdr.probe_data[0].byte_cnt=byte_cnt_reg_read_out.execute(meta.index);
                 }else if(hdr.srv6h.last_entry==4&&hdr.srv6h.segment_left!=0){
-                    hdr.probe_data.push_front(1);
+                    /* hdr.probe_data.push_front(1); */
                     hdr.probe_data[0].setValid(); 
                     swid_out_single_5.apply();
                     hdr.probe_header.num_probe_data=hdr.probe_header.num_probe_data+1;
@@ -1384,7 +1413,7 @@ control Egress(inout egress_headers hdr,
                     
                     hdr.probe_data[0].byte_cnt=byte_cnt_reg_read_out.execute(meta.index);
                 }else if(hdr.srv6h.last_entry==2&&hdr.srv6h.segment_left!=0){
-                    hdr.probe_data.push_front(1);
+                    /* hdr.probe_data.push_front(1); */
                     hdr.probe_data[0].setValid(); 
                     swid_out_single_3.apply();
                     hdr.probe_header.num_probe_data=hdr.probe_header.num_probe_data+1;

@@ -313,40 +313,10 @@ control Ingress(inout ingress_headers hdr,
         }
     };
     //时间计数器
-    Register <bit<64>,bit<32>>(50,0) last_time_reg_for_3list;
-    RegisterAction<bit<64>,bit<32>,bit<64>>(last_time_reg_for_3list) last_time_reg_read_for_3list = {
+    Register <bit<64>,bit<32>>(50,0) last_time_reg;
+    RegisterAction<bit<64>,bit<32>,bit<64>>(last_time_reg) last_time_reg_read = {
         void apply(inout bit<64> last_time,out bit<64> read_val){
             read_val=last_time;
-        }
-    };
-    RegisterAction<bit<64>,bit<32>,bit<64>>(last_time_reg_for_3list) last_time_reg_update_for_3list = {
-        void apply(inout bit<64> last_time,out bit<64> read_val){
-            read_val=123;
-            last_time=(bit<64>)ig_intr_prsr_md.global_tstamp;
-        }
-    };
-    Register <bit<64>,bit<32>>(50,0) last_time_reg_for_4list;
-    RegisterAction<bit<64>,bit<32>,bit<64>>(last_time_reg_for_4list) last_time_reg_read_for_4list = {
-        void apply(inout bit<64> last_time,out bit<64> read_val){
-            read_val=last_time;
-        }
-    };
-    RegisterAction<bit<64>,bit<32>,bit<64>>(last_time_reg_for_4list) last_time_reg_update_for_4list = {
-        void apply(inout bit<64> last_time,out bit<64> read_val){
-            read_val=123;
-            last_time=(bit<64>)ig_intr_prsr_md.global_tstamp;
-        }
-    };
-    Register <bit<64>,bit<32>>(50,0) last_time_reg_for_5list;
-    RegisterAction<bit<64>,bit<32>,bit<64>>(last_time_reg_for_5list) last_time_reg_read_for_5list = {
-        void apply(inout bit<64> last_time,out bit<64> read_val){
-            read_val=last_time;
-        }
-    };
-    RegisterAction<bit<64>,bit<32>,bit<64>>(last_time_reg_for_5list) last_time_reg_update_for_5list = {
-        void apply(inout bit<64> last_time,out bit<64> read_val){
-            read_val=123;
-            last_time=(bit<64>)ig_intr_prsr_md.global_tstamp;
         }
     };
     action drop() {
@@ -719,8 +689,8 @@ control Ingress(inout ingress_headers hdr,
                     swid_single_5.apply();
                     hdr.probe_header.num_probe_data=hdr.probe_header.num_probe_data+1;
                     hdr.probe_data[1].cur_time=ig_intr_prsr_md.global_tstamp;
-                    hdr.probe_data[1].last_time=(bit<48>)last_time_reg_read_for_5list.execute(meta.index);
-                    last_time_reg_update_for_5list.execute(meta.index);
+                    hdr.probe_data[1].last_time=(bit<48>)last_time_reg_read.execute(meta.index);
+                    /* last_time_reg_update.execute(meta.index); */
 
                     hdr.probe_data[1].packet_cnt=packet_cnt_reg_read.execute(meta.index);
                     
@@ -730,8 +700,8 @@ control Ingress(inout ingress_headers hdr,
                     swid_single_4.apply();
                     hdr.probe_header.num_probe_data=hdr.probe_header.num_probe_data+1;
                     hdr.probe_data[1].cur_time=ig_intr_prsr_md.global_tstamp;
-                    hdr.probe_data[1].last_time=(bit<48>)last_time_reg_read_for_4list.execute(meta.index);
-                    last_time_reg_update_for_4list.execute(meta.index);
+                    hdr.probe_data[1].last_time=(bit<48>)last_time_reg_read.execute(meta.index);
+                    /* last_time_reg_update.execute(meta.index); */
 
                     hdr.probe_data[1].packet_cnt=packet_cnt_reg_read.execute(meta.index);
                     
@@ -741,8 +711,8 @@ control Ingress(inout ingress_headers hdr,
                     swid_single_3.apply();
                     hdr.probe_header.num_probe_data=hdr.probe_header.num_probe_data+1;
                     hdr.probe_data[1].cur_time=ig_intr_prsr_md.global_tstamp;
-                    hdr.probe_data[1].last_time=(bit<48>)last_time_reg_read_for_3list.execute(meta.index);
-                    last_time_reg_update_for_3list.execute(meta.index);
+                    hdr.probe_data[1].last_time=(bit<48>)last_time_reg_read.execute(meta.index);
+                    /* last_time_reg_update.execute(meta.index); */
 
                     hdr.probe_data[1].packet_cnt=packet_cnt_reg_read.execute(meta.index);
                     
@@ -988,42 +958,18 @@ control Egress(inout egress_headers hdr,
         }
     };
     //时间计数器
-    Register <bit<64>,bit<32>>(50,0) last_time_reg_out_for_3list;
-    RegisterAction<bit<64>,bit<32>,bit<64>>(last_time_reg_out_for_3list) last_time_reg_read_out_for_3list = {
+    Register <bit<64>,bit<32>>(50,0) last_time_reg_out;
+    RegisterAction<bit<64>,bit<32>,bit<64>>(last_time_reg_out) last_time_reg_read_out = {
         void apply(inout bit<64> last_time,out bit<64> read_val){
             read_val=last_time;
         }
     };
-    RegisterAction<bit<64>,bit<32>,bit<64>>(last_time_reg_out_for_3list) last_time_reg_update_out_for_3list = {
+   /*  RegisterAction<bit<64>,bit<32>,bit<64>>(last_time_reg_out_for_3list) last_time_reg_update_out_for_3list = {
         void apply(inout bit<64> last_time,out bit<64> read_val){
             read_val=123;
             last_time=(bit<64>)eg_intr_prsr_md.global_tstamp;
         }
-    };
-    Register <bit<64>,bit<32>>(50,0) last_time_reg_out_for_4list;
-    RegisterAction<bit<64>,bit<32>,bit<64>>(last_time_reg_out_for_4list) last_time_reg_read_out_for_4list = {
-        void apply(inout bit<64> last_time,out bit<64> read_val){
-            read_val=last_time;
-        }
-    };
-    RegisterAction<bit<64>,bit<32>,bit<64>>(last_time_reg_out_for_4list) last_time_reg_update_out_for_4list = {
-        void apply(inout bit<64> last_time,out bit<64> read_val){
-            read_val=123;
-            last_time=(bit<64>)eg_intr_prsr_md.global_tstamp;
-        }
-    };
-    Register <bit<64>,bit<32>>(50,0) last_time_reg_out_for_5list;
-    RegisterAction<bit<64>,bit<32>,bit<64>>(last_time_reg_out_for_5list) last_time_reg_read_out_for_5list = {
-        void apply(inout bit<64> last_time,out bit<64> read_val){
-            read_val=last_time;
-        }
-    };
-    RegisterAction<bit<64>,bit<32>,bit<64>>(last_time_reg_out_for_5list) last_time_reg_update_out_for_5list = {
-        void apply(inout bit<64> last_time,out bit<64> read_val){
-            read_val=123;
-            last_time=(bit<64>)eg_intr_prsr_md.global_tstamp;
-        }
-    };
+    }; */
     action drop_out() {
         eg_intr_dprsr_md.drop_ctl=1;
     }
@@ -1167,8 +1113,8 @@ control Egress(inout egress_headers hdr,
                     swid_out_single_4.apply();
                     hdr.probe_header.num_probe_data=hdr.probe_header.num_probe_data+1;
                     hdr.probe_data[0].cur_time=eg_intr_prsr_md.global_tstamp;
-                    hdr.probe_data[0].last_time=(bit<48>)last_time_reg_read_out_for_4list.execute(meta.index);
-                    last_time_reg_update_out_for_4list.execute(meta.index);
+                    hdr.probe_data[0].last_time=(bit<48>)last_time_reg_read_out.execute(meta.index);
+                    /* last_time_reg_update_out.execute(meta.index); */
 
                     hdr.probe_data[0].packet_cnt=packet_cnt_reg_read_out.execute(meta.index);
                     
@@ -1178,8 +1124,8 @@ control Egress(inout egress_headers hdr,
                     swid_out_single_5.apply();
                     hdr.probe_header.num_probe_data=hdr.probe_header.num_probe_data+1;
                     hdr.probe_data[0].cur_time=eg_intr_prsr_md.global_tstamp;
-                    hdr.probe_data[0].last_time=(bit<48>)last_time_reg_read_out_for_5list.execute(meta.index);
-                    last_time_reg_update_out_for_5list.execute(meta.index);
+                    hdr.probe_data[0].last_time=(bit<48>)last_time_reg_read_out.execute(meta.index);
+                    /* last_time_reg_update_out.execute(meta.index); */
 
                     hdr.probe_data[0].packet_cnt=packet_cnt_reg_read_out.execute(meta.index);
                     
@@ -1189,8 +1135,8 @@ control Egress(inout egress_headers hdr,
                     swid_out_single_3.apply();
                     hdr.probe_header.num_probe_data=hdr.probe_header.num_probe_data+1;
                     hdr.probe_data[0].cur_time=eg_intr_prsr_md.global_tstamp;
-                    hdr.probe_data[0].last_time=(bit<48>)last_time_reg_read_out_for_3list.execute(meta.index);
-                    last_time_reg_update_out_for_3list.execute(meta.index);
+                    hdr.probe_data[0].last_time=(bit<48>)last_time_reg_read_out.execute(meta.index);
+                    /* last_time_reg_update_out.execute(meta.index); */
 
                     hdr.probe_data[0].packet_cnt=packet_cnt_reg_read_out.execute(meta.index);
                     

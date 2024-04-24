@@ -286,7 +286,7 @@ control Ingress(inout ingress_headers hdr,
                 in ingress_intrinsic_metadata_from_parser_t ig_intr_prsr_md,
                 inout ingress_intrinsic_metadata_for_deparser_t ig_intr_dprsr_md,
                 inout ingress_intrinsic_metadata_for_tm_t ig_intr_tm_md){
-  /*   Register <bit<32>,bit<32>>(50,0) byte_cnt_reg; 
+  Register <bit<32>,bit<32>>(50,0) byte_cnt_reg; 
     RegisterAction<bit<32>,bit<32>,bit<32>>(byte_cnt_reg) byte_cnt_reg_accumulate = {
         void apply(inout bit<32> byte_cnt,out bit<32> read_val){
             read_val=123; 
@@ -311,7 +311,7 @@ control Ingress(inout ingress_headers hdr,
             read_val=packet_cnt;
             packet_cnt=0;
         }
-    }; */  
+    };
     /* action byte_count(bit<32> index) {
         byte_cnt_reg_accumulate.execute(index);
     }
@@ -574,8 +574,8 @@ control Ingress(inout ingress_headers hdr,
                  /*    if(hdr.srv6h.last_entry==2){
                         which_array_to_fill_for_three_list_normal.apply();
                     } */
-                    /* packet_cnt_reg_accumulate.execute(meta.index);
-                    byte_cnt_reg_accumulate.execute(meta.index); */
+                    packet_cnt_reg_accumulate.execute(meta.index);
+                    byte_cnt_reg_accumulate.execute(meta.index);
                     if(hdr.srv6h.last_entry==3){
                         hdr.srv6_list[0].setInvalid();
                         hdr.srv6_list[1].setInvalid();
@@ -605,8 +605,8 @@ control Ingress(inout ingress_headers hdr,
                     srv6_forward_start_for_5list();
                 }
                 ipv6_lpm_INT.apply();
-               /*  packet_cnt_reg_read.execute(meta.index);
-                byte_cnt_reg_read.execute(meta.index); */
+                packet_cnt_reg_read.execute(meta.index);
+                byte_cnt_reg_read.execute(meta.index);
                 
             }
             if(hdr.srv6h.segment_left==0){

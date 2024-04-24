@@ -124,6 +124,7 @@ struct ingress_metadata {
     bit<128> s4;
     bit<128> s5;
     bit<32> index;//用来判断这个接收到的数据包的srv6转发路径是对应数组的哪个位置
+    bit<64> time;
 }
 
 struct ingress_headers {
@@ -148,7 +149,7 @@ parser IngressParser(packet_in packet,
                 out ingress_intrinsic_metadata_t ig_intr_md) {
 
     state start {
-        meta = {0,0,0,0,0,0,0,0,0,0,0,0,0};
+        meta = {0,0,0,0,0,0,0,0,0,0,0,0,0,0};
         packet.extract(ig_intr_md);
         packet.advance(PORT_METADATA_SIZE);
         transition parse_ethernet;
@@ -286,19 +287,6 @@ control Ingress(inout ingress_headers hdr,
                 in ingress_intrinsic_metadata_from_parser_t ig_intr_prsr_md,
                 inout ingress_intrinsic_metadata_for_deparser_t ig_intr_dprsr_md,
                 inout ingress_intrinsic_metadata_for_tm_t ig_intr_tm_md){
-  Register <bit<32>,bit<32>>(50,0) byte_cnt_reg; 
-    RegisterAction<bit<32>,bit<32>,bit<32>>(byte_cnt_reg) byte_cnt_reg_accumulate = {
-        void apply(inout bit<32> byte_cnt,out bit<32> read_val){
-            read_val=123; 
-            byte_cnt=byte_cnt+meta.len;
-        }
-    }; 
-    RegisterAction<bit<32>,bit<32>,bit<32>>(byte_cnt_reg) byte_cnt_reg_read = {
-        void apply(inout bit<32> byte_cnt,out bit<32> read_val){
-            read_val=byte_cnt;
-            byte_cnt=0;
-        }
-    };   
     Register <bit<32>,bit<32>>(50,0) packet_cnt_reg; 
     RegisterAction<bit<32>,bit<32>,bit<32>>(packet_cnt_reg) packet_cnt_reg_accumulate = {
         void apply(inout bit<32> packet_cnt,out bit<32> read_val){
@@ -311,19 +299,39 @@ control Ingress(inout ingress_headers hdr,
             read_val=packet_cnt;
             packet_cnt=0;
         }
-    };
-    /* action byte_count(bit<32> index) {
+    }; 
+    Register <bit<32>,bit<32>>(50,0) byte_cnt_reg; 
+    RegisterAction<bit<32>,bit<32>,bit<32>>(byte_cnt_reg) byte_cnt_reg_accumulate = {
+        void apply(inout bit<32> byte_cnt,out bit<32> read_val){
+            read_val=123; 
+            byte_cnt=byte_cnt+meta.len;
+        }
+    }; 
+    RegisterAction<bit<32>,bit<32>,bit<32>>(byte_cnt_reg) byte_cnt_reg_read = {
+        void apply(inout bit<32> byte_cnt,out bit<32> read_val){
+            read_val=byte_cnt;
+            byte_cnt=0;
+        }
+    };  
+    Register <bit<64>,bit<32>>(50,0) last_time_reg;
+    RegisterAction<bit<64>,bit<32>,bit<64>>(last_time_reg) last_time_reg_read_and_update = {
+        void apply(inout bit<64> last_time,out bit<64> read_val){
+            read_val=last_time;
+            /* last_time=meta.time; */
+        }
+    }; 
+  /*   action byte_count(bit<32> index) {
         byte_cnt_reg_accumulate.execute(index);
     }
     action byte_read(bit<32> index) {
         byte_cnt_reg_read.execute(index);
-    } 
-    action packet_count(bit<32> index) {
+    }  */
+   /*  action packet_count(bit<32> index) {
         packet_cnt_reg_accumulate.execute(index);
     }
     action packet_read(bit<32> index) {
         packet_cnt_reg_read.execute(index);
-    } */
+    }  */
  /*    action set_swid(bit<8> swid) {
         hdr.probe_data[0].swid = swid;
     }
@@ -513,6 +521,8 @@ control Ingress(inout ingress_headers hdr,
             ig_intr_tm_md.ucast_egress_port = ig_intr_md.ingress_port;
         }
         if(hdr.ipv4.isValid()){        //说明这是一个数据包
+            packet_cnt_reg_accumulate.execute(meta.index);
+            byte_cnt_reg_accumulate.execute(meta.index); 
             if(!hdr.srv6h.isValid()){  //这是一个刚刚从发送端发过来的数据包
                 if(hdr.tcp.isValid()){
                     select_traffic_class.apply();
@@ -574,8 +584,14 @@ control Ingress(inout ingress_headers hdr,
                  /*    if(hdr.srv6h.last_entry==2){
                         which_array_to_fill_for_three_list_normal.apply();
                     } */
-                    packet_cnt_reg_accumulate.execute(meta.index);
-                    byte_cnt_reg_accumulate.execute(meta.index);
+                    /* if(meta.index1==1){
+                        packet_cnt_reg_accumulate.execute(meta.index);
+                    }else{
+                        byte_cnt_reg_accumulate.execute(meta.index);
+                    } */
+                    /* packet_cnt_reg_accumulate.execute(meta.index); */
+                    /* byte_cnt_reg_accumulate.execute(meta.index); 
+                    last_time_reg_read.execute(meta.index); */
                     if(hdr.srv6h.last_entry==3){
                         hdr.srv6_list[0].setInvalid();
                         hdr.srv6_list[1].setInvalid();
@@ -596,6 +612,11 @@ control Ingress(inout ingress_headers hdr,
                 }
 
             }else if(hdr.probe_header.isValid()){//这是一个INT包
+            hdr.probe_data.push_front(1);
+            hdr.probe_data[0].setValid(); 
+            packet_cnt_reg_read.execute(meta.index);
+            byte_cnt_reg_read.execute(meta.index); 
+            last_time_reg_read_and_update.execute(meta.index);
             if(hdr.srv6h.segment_left!=0){
                 if(hdr.srv6h.segment_left==2){
                     srv6_forward_start_for_3list();
@@ -605,8 +626,13 @@ control Ingress(inout ingress_headers hdr,
                     srv6_forward_start_for_5list();
                 }
                 ipv6_lpm_INT.apply();
-                packet_cnt_reg_read.execute(meta.index);
-                byte_cnt_reg_read.execute(meta.index);
+                /* if(meta.index1==1){
+                    packet_cnt_reg_read.execute(meta.index);
+                }else{
+                    byte_cnt_reg_read.execute(meta.index);
+                } */
+                /* packet_cnt_reg_accumulate.execute(meta.index);
+                byte_cnt_reg_read.execute(meta.index);  */ 
                 
             }
             if(hdr.srv6h.segment_left==0){

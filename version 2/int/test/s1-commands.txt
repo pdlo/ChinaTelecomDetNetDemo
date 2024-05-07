@@ -1,0 +1,7 @@
+table_add select_traffic_class  get_traffic_class 21.158.188.2 21.156.182.2 100 => 1
+table_add select_srv6_path srv6_insert 21.158.188.2/32 1 => 3 2 ::136 ::128 ::152 :: ::
+table_add ipv6_lpm_normal_start ipv6_forward ::136/128 => 00:00:00:00:00:01 2
+table_add which_array_to_fill_for_three_list_out_normal determine_the_index_of_packet_out ::136 ::128 ::152 => 1
+table_add ipv6_lpm_INT ipv6_forward ::136/128 => 00:00:00:00:00:01 2
+table_add which_array_to_fill_for_three_list_out_INT determine_the_index_of_packet_out ::136 ::128 ::152 => 1
+table_add swid_out_single set_swid_out 0x86dd => 1

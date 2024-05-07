@@ -1,0 +1,7 @@
+table_set_default srv6_forward drop
+table_set_default ipv6_lpm drop
+
+table_add srv6_forward srv6forward 0x86dd =>
+
+table_add ipv6_lpm ipv6_forward ::106/128 => 00:00:00:00:00:07 1
+table_add ipv6_lpm ipv6_forward ::107/128 => 00:00:00:00:00:08 2

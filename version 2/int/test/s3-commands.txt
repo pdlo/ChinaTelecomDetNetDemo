@@ -1,0 +1,5 @@
+table_add ipv6_lpm_normal_end ipv6_forward ::152/128 => 00:00:00:00:00:03 2
+table_add which_array_to_fill_for_three_list_normal determine_the_index_of_packet ::136 ::128 ::152 => 1
+table_add which_array_to_fill_for_three_list_INT determine_the_index_of_packet ::136 ::128 ::152 => 1
+table_add swid_single set_swid 0x86dd => 2
+table_add ipv6_lpm_INT_end ipv6_forward ::152/128 => 00:00:00:00:00:03 2

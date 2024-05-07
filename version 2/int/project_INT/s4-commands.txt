@@ -1,0 +1,17 @@
+table_add ipv6_lpm_normal_end ipv6_forward ::108/128 => 00:00:00:03:01:00 3
+table_add ipv6_lpm_INT ipv6_forward ::111/128 => 00:00:00:03:01:11 1
+table_add which_array_to_fill_for_four_list_normal determine_the_index_of_packet ::99 ::101 ::104 ::108 => 1
+table_add which_array_to_fill_for_five_list_normal determine_the_index_of_packet ::99 ::102 ::107 ::104 ::108  => 2
+
+table_add which_array_to_fill_for_four_list_INT determine_the_index_of_packet ::99 ::101 ::104 ::109 => 1
+table_add which_array_to_fill_for_five_list_INT determine_the_index_of_packet ::99 ::102 ::107 ::104 ::109 => 2
+
+table_add swid_single set_swid 0x86dd => 2
+table_add swid_both set_swid 0x86dd => 2
+table_add swid_out_both set_swid_out 0x86dd => 2
+
+table_add ipv6_lpm_INT_end ipv6_forward ::109/128 => 00:00:00:03:01:11 2
+
+table_add both_direction_for_INT_six_list_ingress determine_the_index_of_packet ::99 ::101 ::104 ::111 ::103 ::100 ::110 => 1
+
+table_add both_direction_for_INT_six_list_egress determine_the_index_of_packet_out  ::99 ::101 ::104 ::111 ::103 ::100 ::110 => 3

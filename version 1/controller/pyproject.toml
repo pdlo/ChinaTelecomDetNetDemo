@@ -7,16 +7,19 @@ authors = [
     {name = "Wang Xinyu", email = "hi_wangxinyu@163.com"},
 ]
 dependencies = [
-    "sqlmodel>=0.0.16",
-    "toml>=0.10.2",
+    "pandas>=2.2.2",
+    "sqlmodel>=0.0.18",
+    "streamlit>=1.34.0",
     "fabric>=3.2.2",
-    "scapy>=2.5.0",
-    "streamlit>=1.32.2",
+    "toml>=0.10.2",
 ]
-requires-python = "==3.8.*"
+requires-python = "==3.10.*"
 readme = "README.md"
 license = {text = "MIT"}
 
+[[tool.pdm.source]]
+name = "pypi"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 
 [tool.pdm]
 distribution = false

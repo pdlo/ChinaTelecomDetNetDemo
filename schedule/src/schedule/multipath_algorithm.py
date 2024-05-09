@@ -5,7 +5,7 @@ def low_delay(path_df, s_delay):
     condition = path_df['path_delay'] < s_delay
     filtered_df = path_df[condition]
     max_idx = filtered_df['path_delay'].idxmax()
-    print(filtered_df)
+    # print(filtered_df)
     if filtered_df.empty:
         return -1
     else:
@@ -15,7 +15,7 @@ def high_bandwidth(path_df, s_bandwidth):
     condition = path_df['path_left_bandwidth'] > s_bandwidth
     filtered_df = path_df[condition]
     min_idx = filtered_df['path_left_bandwidth'].idxmin()
-    print(filtered_df)
+    # print(filtered_df)
     if filtered_df.empty:
         return -1
     else:

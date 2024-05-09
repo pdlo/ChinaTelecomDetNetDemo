@@ -20,7 +20,10 @@ formatter = logging.Formatter(
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 # 令logger保存到文本文件
-file_handler = logging.FileHandler(str(root/"logs"/datetime.now().strftime('schedule %Y%m%d %H-%M-%S.log')),encoding='utf8')
+LOG_FILE_PATH=root/"logs"/datetime.now().strftime('schedule %Y%m%d %H-%M-%S.log')
+LOG_FILE_PATH.parent.mkdir(exist_ok=True)
+file_handler = logging.FileHandler(LOG_FILE_PATH,encoding='utf8')
+
 file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)

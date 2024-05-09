@@ -4,5 +4,5 @@
 interval = 10#每隔多长时间重新计算一次
 
 [internal_network.tofino]
-user = 'this is not real user'#出于安全考虑，请联系组内成员
-password = 'this is not real password'
+user = 'root'#出于安全考虑，请联系组内成员
+password = 'onl'

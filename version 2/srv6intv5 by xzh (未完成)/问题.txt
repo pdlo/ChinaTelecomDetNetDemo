@@ -1,0 +1,21 @@
+root@localhost:~/bf-sde-9.1.0/pkgsrc/p4-build# make
+make  all-recursive
+make[1]: Entering directory '/root/bf-sde-9.1.0/pkgsrc/p4-build'
+Making all in tofino
+make[2]: Entering directory '/root/bf-sde-9.1.0/pkgsrc/p4-build/tofino'
+/root/bf-sde-9.1.0/install/bin/p4c --std p4-16 --target tofino --arch tna -o ./srv6int_v5 -g --verbose 1 --bf-rt-schema ./srv6int_v5/bf-rt.json    /root/my_p4/xzh/srv6int_v5/srv6int_v5.p4
+Generating dependency graph json
+./srv6int_v5/pipe/srv6int_v5.bfa:3773: error: tofino supports up to 12 stages, using 13
+./srv6int_v5/pipe/srv6int_v5.bfa:0: error: Due to errors, no binary will be generated
+failed command assembler
+Unable to produce all summary logs
+  Error producing mau.resources.log
+failed command summary_logging
+Makefile:1370: recipe for target 'p4c.ts' failed
+make[2]: *** [p4c.ts] Error 1
+make[2]: Leaving directory '/root/bf-sde-9.1.0/pkgsrc/p4-build/tofino'
+Makefile:451: recipe for target 'all-recursive' failed
+make[1]: *** [all-recursive] Error 1
+make[1]: Leaving directory '/root/bf-sde-9.1.0/pkgsrc/p4-build'
+Makefile:377: recipe for target 'all' failed
+make: *** [all] Error 2

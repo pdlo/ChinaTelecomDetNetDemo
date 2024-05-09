@@ -177,3 +177,4 @@ controller/tests/test.py
 controller/config.toml
 controller/src/test.py
 schedule/database.db
+schedule/config.toml

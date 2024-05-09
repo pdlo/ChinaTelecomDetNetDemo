@@ -57,6 +57,7 @@ def get_session():
     return  Session(engine)
 
 def main():
+    print("已建表")
     SQLModel.metadata.create_all(engine)
 
 if __name__ == "__main__":

@@ -22,5 +22,9 @@ license = {text = "MIT"}
 name = "pypi"
 url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 
+[tool.pdm.scripts]
+create_table = "python ./src/orm.py"
+start = "python -m src.schedule"
+
 [tool.pdm]
 distribution = false

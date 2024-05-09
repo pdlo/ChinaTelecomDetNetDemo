@@ -1,8 +1,0 @@
-#用于实例的配置文件，请从文件名去掉example_并把账号密码等敏感信息修改为真实值
-
-[schedule]
-interval = 10#每隔多长时间重新计算一次
-
-[internal_network.tofino]
-user = 'root'#出于安全考虑，请联系组内成员
-password = 'onl'

@@ -362,8 +362,8 @@ control Ingress(
         else if (hdr.probe.data_cnt == 2) {
             hdr.probe_data[1].packet_cnt_ingress = packet_cnt;
             hdr.probe_data[1].packet_len_ingress = packet_len;
-            hdr.probe_data[0].packet_cnt_egress = packet_cnt_out;
-            hdr.probe_data[0].packet_len_egress = packet_len_out;
+            hdr.probe_data[1].packet_cnt_egress = packet_cnt_out;
+            hdr.probe_data[1].packet_len_egress = packet_len_out;
         }
     }
 }

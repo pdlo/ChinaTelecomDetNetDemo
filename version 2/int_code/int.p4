@@ -315,16 +315,16 @@ control Ingress(
             if(hdr.udp.isValid()){
                 hdr.ipv4.diffserv=0;
                 meta.packet_cnt_add_ingress=1;
-                meta.packet_len_add_ingress=10;
+                meta.packet_len_add_ingress=14+hdr.ipv4.totalLen;
                 meta.packet_cnt_add_egress=1;
-                meta.packet_len_add_egress=10;
+                meta.packet_len_add_egress=14+hdr.ipv4.totalLen;
             }
             else if(hdr.tcp.isValid()){
                 dscp_get.apply();
                 meta.packet_cnt_add_ingress=1;
-                meta.packet_len_add_ingress=10;
+                meta.packet_len_add_ingress=14+hdr.ipv4.totalLen;
                 meta.packet_cnt_add_egress=1;
-                meta.packet_len_add_egress=10;
+                meta.packet_len_add_egress=14+hdr.ipv4.totalLen;
             }
             else if(hdr.probe.isValid()){
                     if (hdr.probe.data_cnt == 0) {

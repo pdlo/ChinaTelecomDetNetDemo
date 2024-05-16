@@ -12,7 +12,7 @@ cd $SDE/pkgsrc/p4-build
 $SDE/pkgsrc/p4-build/configure --with-tofino --with-p4c=p4c --prefix=$SDE_INSTALL \
 --bindir=$SDE_INSTALL/bin \
 P4_NAME=simple_ipv6 \
-P4_PATH=/root/my_p4/xzh/simple_ipv6/simple_ipv6.p4 \
+P4_PATH=/root/my_p4/simple_ipv6/simple_ipv6.p4 \
 P4_VERSION=p4-16 P4_ARCHITECTURE=tna \
 LDFLAGS="-L$SDE_INSTALL/lib" \
 --enable-thrift
@@ -28,7 +28,7 @@ sudo kill <proces id>
 
 ## 运行p4
 
-cd ~/my_p4/xzh/simple_ipv6
+cd ~/my_p4/simple_ipv6
 chmod +777 ./*
 ./run_p4.sh
 
@@ -41,12 +41,8 @@ chmod +777 ./*
 ## 激活端口
 
 ucli
-pm port-add 25/0 10g none
-pm port-add 27/0 10g none
-pm port-add 29/0 10g none
-pm port-add 31/0 10g none
-pm port-enb 25/0
-pm port-enb 27/0
-pm port-enb 29/0
-pm port-enb 31/0
+pm port-add 5/0 10g none
+pm port-add 9/0 10g none
+pm port-enb 5/0
+pm port-enb 9/0
 pm show

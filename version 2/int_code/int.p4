@@ -282,6 +282,7 @@ control Ingress(
     }
     table dscp_get{
         key={
+            hdr.ipv4.src_ipv4:exact;
             hdr.ipv4.dst_ipv4:exact;
             hdr.tcp.dst_port:exact;
         }

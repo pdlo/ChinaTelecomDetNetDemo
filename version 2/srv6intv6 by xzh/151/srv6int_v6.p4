@@ -122,10 +122,6 @@ header probe_data_h {
     bit<8>    port_egress;
     bit<48>   current_time_ingress; // 入端口当前INT包进入时间
     bit<48>   current_time_egress; // 出端口当前INT包离开时间
-    bit<16>   packet_cnt_ingress;
-    bit<16>   packet_cnt_egress;
-    bit<16>   packet_len_ingress;
-    bit<16>   packet_len_egress;
 }
 
 /*************************************************************************

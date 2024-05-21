@@ -280,17 +280,31 @@ control Ingress(
     action set_dscp(bit<8> dscp){
         hdr.ipv4.diffserv=dscp;
     }
-    table dscp_get{
+    action get_traffic_class(bit<8> trafficclass) {
+        meta.trafficclass = trafficclass; 
+    }
+    
+    table trafficclass_set{
         key={
             hdr.ipv4.src_ipv4:exact;
             hdr.ipv4.dst_ipv4:exact;
             hdr.tcp.dst_port:exact;
         }
         actions={
+            get_traffic_class();
+        }
+        default_action=get_traffic_class(0);
+    }
+    table dscp_get{
+        key={
+            hdr.ipv4.dst_ipv4:lpm;
+            meta.trafficclass:exact;
+        }
+        actions={
             set_dscp();
             drop();
         }
-        default_action=drop();
+        default_action = drop();
     }
 
     apply{
@@ -321,6 +335,7 @@ control Ingress(
                 meta.packet_len_add_egress=14+hdr.ipv4.totalLen;
             }
             else if(hdr.tcp.isValid()){
+                trafficclass_set.apply();
                 dscp_get.apply();
                 meta.packet_cnt_add_ingress=1;
                 meta.packet_len_add_ingress=14+hdr.ipv4.totalLen;

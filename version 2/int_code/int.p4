@@ -13,7 +13,7 @@ const bit<16> ETH_TYPE_ARP = 0x0806;
 const bit<8>  IP_PROTO_ICMP = 1;
 const bit<8>  IP_PROTO_TCP = 6;
 const bit<8>  IP_PROTO_UDP = 17;
-const bit<8>  IP_PROTO_INT = 10;
+const bit<8>  IP_PROTO_INT = 150;
 
 const bit<48> VIRTUAL_MAC = 0x0a0a0a0a0a0a;
 

@@ -14,13 +14,10 @@ def get_if():
     return iface
 iface=get_if()
 def packet_handler(pkt):
-    while True:
-    	pkt.show2()
-
-
+    print("got a packet")
+    pkt.show2()
+    sys.stdout.flush()
 def receive_packets():
     print(f"start receiving on {iface}")
     sniff(iface=iface,prn=packet_handler)
-
-
 receive_packets()

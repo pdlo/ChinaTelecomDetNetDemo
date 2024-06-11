@@ -12,7 +12,7 @@ cd $SDE/pkgsrc/p4-build
 $SDE/pkgsrc/p4-build/configure --with-tofino --with-p4c=p4c --prefix=$SDE_INSTALL \
 --bindir=$SDE_INSTALL/bin \
 P4_NAME=simple_ipv6 \
-P4_PATH=/root/my_p4/simple_ipv6/simple_ipv6.p4 \
+P4_PATH=/root/my_p4/xzh/simple_ipv6/simple_ipv6.p4 \
 P4_VERSION=p4-16 P4_ARCHITECTURE=tna \
 LDFLAGS="-L$SDE_INSTALL/lib" \
 --enable-thrift

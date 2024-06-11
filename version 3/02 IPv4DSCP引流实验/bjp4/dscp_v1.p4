@@ -15,8 +15,6 @@ const bit<8>  IP_PROTO_TCP = 6;
 const bit<8>  IP_PROTO_UDP = 17;
 const bit<8>  IP_PROTO_INT = 150;
 
-const bit<48> VIRTUAL_MAC = 0x0a0a0a0a0a0a;
-
 /*************************************************************************
 *********************** H E A D E R S  ***********************************
 *************************************************************************/
@@ -39,7 +37,7 @@ header arp_h {
     bit<32>  target_ip;
 }
 
-header ipv6_h {
+header ipv6_t {
     bit<4>   version;
     bit<8>   traffic_class;
     bit<20>  flow_label;
@@ -54,18 +52,18 @@ header ipv4_t {
     bit<4>    version;
     bit<4>    ihl;
     bit<8>    diffserv;
-    bit<16>   totalLen;
+    bit<16>   total_len;
     bit<16>   identification;
     bit<3>    flags;
-    bit<13>   fragOffset;
+    bit<13>   frag_offset;
     bit<8>    ttl;
     bit<8>    protocol;
-    bit<16>   hdrChecksum;
+    bit<16>   hdr_checksum;
     bit<32>   src_ipv4;
     bit<32>   dst_ipv4;
 }
 
-header tcp_h {
+header tcp_t {
     bit<16>  src_port;
     bit<16>  dst_port;
     bit<32>  seq_no;
@@ -78,14 +76,14 @@ header tcp_h {
     bit<16>  urgent_ptr;
 }
 
-header udp_h {
+header udp_t {
     bit<16>  src_port;
     bit<16>  dst_port;
     bit<16>  hdr_length;
     bit<16>  checksum;
 }
 
-header icmp_h {
+header icmp_t {
     bit<8>  type;
     bit<8>  code;
     bit<16>  checksum;
@@ -93,11 +91,11 @@ header icmp_h {
     bit<16>  sequence;
 }
 
-header probe_h {
+header probe_t {
     bit<8> data_cnt;
 }
 
-header probe_data_h {
+header probe_data_t {
     bit<8>    port_ingress;
     bit<8>    port_egress;
     bit<48>   current_time_ingress; // 入端口当前INT包进入时间
@@ -115,13 +113,13 @@ header probe_data_h {
 struct my_ingress_headers_t {
     ethernet_t               ethernet;
     arp_h                    arp;
-    ipv6_h                   ipv6;
+    ipv6_t                   ipv6;
     ipv4_t                   ipv4;
-    tcp_h                    tcp;
-    udp_h                    udp;
-    icmp_h                   icmp;
-    probe_h                  probe;
-    probe_data_h[2]          probe_data;
+    tcp_t                    tcp;
+    udp_t                    udp;
+    icmp_t                   icmp;
+    probe_t                  probe;
+    probe_data_t[2]          probe_data;
 }
 
     /******  G L O B A L   I N G R E S S   M E T A D A T A  *********/
@@ -189,12 +187,12 @@ parser IngressParser(packet_in pkt,
         pkt.extract(hdr.udp);
         transition accept;
     }
-    state parse_int{
+    state parse_int {
         pkt.extract(hdr.probe);
-        transition select(hdr.probe.data_cnt){
+        transition select(hdr.probe.data_cnt) {
             0: accept;
             1: parse_probe_list_1;
-            2:parse_probe_list_2;
+            2: parse_probe_list_2;
         }
     }
     state parse_probe_list_1 {
@@ -224,49 +222,60 @@ control Ingress(
     action drop() {
         ig_intr_dprsr_md.drop_ctl = 1;
     }
-
-    action ipv4_forward(bit<48> src_mac, bit<48> dst_mac, bit<9> port) {
-        // 出端口
+//*************************************************************
+    action ipv6_forward(bit<8> dscp, PortId_t port) {
+        hdr.ipv6.traffic_class = dscp;
         ig_intr_tm_md.ucast_egress_port = port;
-        // MAC层
-        hdr.ethernet.src_mac = src_mac;
-        hdr.ethernet.dst_mac = dst_mac;
-        hdr.ethernet.ether_type = ETH_TYPE_IPV4; 
     }
-
-    table ipv4_lpm{
+    table mapping_ipv6 {
+        key = {
+            hdr.ipv6.dst_ipv6: exact;
+        }
+        actions = {
+            ipv6_forward;
+            drop;
+        }
+        size = 1024;
+        const default_action = drop();
+    }
+//********************************************************
+    action ipv4_forward(PortId_t port) {
+        ig_intr_tm_md.ucast_egress_port = port;
+    }
+    table mapping_ipv4 {
         key = {
             hdr.ipv4.dst_ipv4: exact;
         }
         actions = {
-            ipv4_forward();
-            drop();
+            ipv4_forward;
+            drop;
         }
-        default_action = drop();
+        size = 1024;
+        const default_action = drop();
     }
-
-    action set_dscp(bit<8> dscp){
-        hdr.ipv4.diffserv=dscp;
-    }
+//******************************************************
     action get_traffic_class(bit<8> trafficclass) {
         meta.trafficclass = trafficclass; 
     }
-    
     table trafficclass_set{
         key={
-            hdr.ipv4.src_ipv4:exact;
-            hdr.ipv4.dst_ipv4:exact;
-            hdr.tcp.dst_port:exact;
+            hdr.ipv4.src_ipv4: exact;
+            hdr.ipv4.dst_ipv4: exact;
+            hdr.tcp.dst_port: exact;
         }
         actions={
             get_traffic_class();
         }
         default_action=get_traffic_class(0);
     }
+//******************************************************
+    action set_dscp(bit<8> dscp){
+        hdr.ipv4.diffserv=dscp;
+    }
     table dscp_get{
         key={
-            hdr.ipv4.dst_ipv4:lpm;
-            meta.trafficclass:exact;
+            hdr.ipv4.dst_ipv4: exact;
+            meta.trafficclass: exact;
         }
         actions={
             set_dscp();
@@ -274,7 +283,7 @@ control Ingress(
         }
         default_action = drop();
     }
-
+//******************************************************
     apply{
         if (hdr.arp.isValid()) {
             //deal with arp packet
@@ -294,22 +303,25 @@ control Ingress(
 
             }
         }
-        else if(hdr.ipv6.isValid()){
-
+        else if (hdr.ipv6.isValid()) {
+            //deal with ipv6 packet
+            mapping_ipv6.apply();
         }
-        else if (hdr.ipv4.isValid()){
-            ipv4_lpm.apply();
-            if(hdr.udp.isValid()){
-                hdr.ipv4.diffserv=0;
-            }
-            else if(hdr.tcp.isValid()){
+        else if (hdr.ipv4.isValid()) {
+            //deal with ipv4 packet
+            mapping_ipv4.apply();
+            if(hdr.tcp.isValid()){
                 trafficclass_set.apply();
                 dscp_get.apply();
             }
-            else if(hdr.probe.isValid()){
-                hdr.ipv4.diffserv=0;   
-            }else if(hdr.icmp.isValid()){
+            else if(hdr.udp.isValid()){
                 hdr.ipv4.diffserv=0;
+            }
+            else if(hdr.icmp.isValid()){
+                hdr.ipv4.diffserv=0;
+            }
+            else if(hdr.probe.isValid()){
+                   
             }
         }
     }
@@ -322,7 +334,23 @@ control IngressDeparser(packet_out pkt,
         /* Intrinsic */
         in ingress_intrinsic_metadata_for_deparser_t ig_dprsr_md)
 {
+    Checksum() ipv4_checksum;
     apply {
+        hdr.ipv4.hdr_checksum = ipv4_checksum.update(
+            {
+                hdr.ipv4.version,
+                hdr.ipv4.ihl,
+                hdr.ipv4.diffserv,
+                hdr.ipv4.total_len,
+                hdr.ipv4.identification,
+                hdr.ipv4.flags,
+                hdr.ipv4.frag_offset,
+                hdr.ipv4.ttl,
+                hdr.ipv4.protocol,
+                hdr.ipv4.src_ipv4,
+                hdr.ipv4.dst_ipv4
+            }
+        );
         pkt.emit(hdr.ethernet);
         pkt.emit(hdr.arp);
         pkt.emit(hdr.ipv6);

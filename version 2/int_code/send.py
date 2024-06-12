@@ -65,7 +65,7 @@ def send_ipv6_tcp():
         sendp(packet,iface=iface)
         time.sleep(1)
 def send_ipv4_INT():
-    packet=Ether(src=get_if_hwaddr(iface),dst="ff:ff:ff:ff:ff:ff")/IP(src='127.0.0.1',dst='127.0.0.1',tos=1)/ \
+    packet=Ether(src=get_if_hwaddr(iface),dst="ff:ff:ff:ff:ff:ff")/IP(src='172.27.15.130',dst='172.27.15.131',tos=1)/ \
             probe_t(data_cnt=0)
     while True:
         packet.show()

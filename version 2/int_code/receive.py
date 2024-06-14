@@ -5,7 +5,7 @@ def get_if():
     ifs=get_if_list()
     iface=None
     for i in ifs:
-        if "eth0" in i:
+        if "enp3s0f1" in i:
             iface=i
             break
     if iface==None:

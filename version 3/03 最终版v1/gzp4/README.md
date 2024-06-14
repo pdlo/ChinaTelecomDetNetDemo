@@ -9,8 +9,8 @@ cd $SDE/pkgsrc/p4-build
 
 $SDE/pkgsrc/p4-build/configure --with-tofino --with-p4c=p4c --prefix=$SDE_INSTALL \
 --bindir=$SDE_INSTALL/bin \
-P4_NAME=simple_ipv6_v2 \
-P4_PATH=/root/chinatelecom/simple_ipv6_v2/simple_ipv6_v2.p4 \
+P4_NAME=sinet_v1 \
+P4_PATH=/root/chinatelecom/sinet_v1/sinet_v1.p4 \
 P4_VERSION=p4-16 P4_ARCHITECTURE=tna \
 LDFLAGS="-L$SDE_INSTALL/lib" \
 --enable-thrift
@@ -24,9 +24,12 @@ make install
 ps -ax | grep switchd
 sudo kill <proces id>
 
-## 运行p4
+screen -ls
 
-cd ~/chinatelecom/simple_ipv6_v2
+## 运行p4
+screen -S run_p4
+
+cd ~/chinatelecom/sinet_v1
 chmod +777 ./*
 ./run_p4.sh
 
@@ -41,8 +44,16 @@ pm port-enb 13/0
 pm port-enb 33/0
 pm show
 
+## 退出界面
+Ctrl+A+D
+## 进入界面
+screen -r run_p4
+
 ## 下发流表
 
-cd ~/chinatelecom/simple_ipv6_v2
+screen -S run_setup
+
+cd ~/chinatelecom/sinet_v1
 chmod +777 ./*
 ./run_setup.sh
+

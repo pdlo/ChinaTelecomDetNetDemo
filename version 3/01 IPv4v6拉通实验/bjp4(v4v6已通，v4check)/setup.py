@@ -100,7 +100,7 @@ mapping_ipv4.add_with_ipv4_forward(dst_addr=0xc612cc72, dscp=0, port=64)
 #172.29.89.126
 mapping_ipv4.add_with_ipv4_forward(dst_addr=0xac1d597e, dscp=0, port=64)
 #198.18.204.126
-mapping_ipv4.add_with_ipv4_forward(dst_addr=0xc612cc7e, dscp=32, port=64)
+mapping_ipv4.add_with_ipv4_forward(dst_addr=0xc612cc7e, dscp=0, port=64)
 
 bfrt.complete_operations()
 

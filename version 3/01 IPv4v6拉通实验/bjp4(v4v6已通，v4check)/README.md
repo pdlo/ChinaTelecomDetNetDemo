@@ -1,35 +1,4 @@
 
-scp ~/p4bj/* root@172.27.15.2:~/chinatelecom/simple_ipv6
-密码：onl
-
-scp ~/send.pcap root@172.29.83.74:~/
-密码：Gsta@2706
-
-scp ~/receive.pcap root@172.29.83.74:~/
-密码：Gsta@2706
-
-ssh root@172.27.15.2
-密码：onl
-
-ssh bjtu-bj1@172.27.15.3
-密码：bjtungirc
-
-ssh bjtu-bj3@172.27.15.4
-密码：bjtungirc
-
-sudo route add -net 172.29.89.112/28 gw 172.27.15.129 metric 1 dev enp3s0f1
-sudo route add -net 198.18.204.118/24 gw 172.27.15.129 metric 1 dev enp3s0f1
-
-sudo route del -host 198.18.204.118
-sudo route del -net 198.18.204.118 netmask 255.255.255.0 gw 172.27.15.129
-
-sudo tcpdump -i enp3s0f1 -w test.pcap
-sudo tcpdump -i enp3s0f1
-sudo tcpdump -i enp3s0f1 host 198.18.204.113 and 172.27.15.3 抓取两个ip之间的通信数据包
-
-mount /dev/sdb4 /mnt/usb
-umount /dev/sdb4 /mnt/usb
-
 ## 编译
 
 export SDE=/root/bf-sde-9.1.0

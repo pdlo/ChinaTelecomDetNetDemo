@@ -1,0 +1,10 @@
+table_add service ipv6_simple_forward 2000::251 8001 => 00:00:00:00:00:01 2
+table_add service ipv6_simple_forward 2000::152 8001 => 00:00:00:00:00:02 1
+table_add service c2s 2004:06cc:1211:0cba:1c32:fc2b:7cbf:00c3 9003 => 00:00:00:00:00:01 2 2000::251
+table_add service s2c 2000::152 9003 => 00:00:00:00:00:02 1 2004:06cc:1211:0cba:1c32:fc2b:7cbf:00c3
+table_add service route 2004:0522:bac2:2ce3:b1a4:c2ef:ff2c:0ac1 9001 => 00:00:00:00:00:02 3
+table_add service route 2004:05b1:b5ea:aa1c:2104:efff:cf03:bc02 9002 => 00:00:00:00:00:03 3
+
+table_add service_reture route_reverse 2000::152 =>  00:00:00:00:00:02 1
+
+

@@ -1,0 +1,5 @@
+table_add service route_to_server 2004:0522:bac2:2ce3:b1a4:c2ef:ff2c:0ac1 9001 => 00:00:00:00:00:11 2 2000::250
+table_add service route_to_server 2004:05b1:b5ea:aa1c:2104:efff:cf03:bc02 9002 => 00:00:00:00:00:11 2 2000::250
+
+table_add service_reture route_to_tunnel 2000::152 9001 => 00:00:00:00:00:11 1 2004:0522:bac2:2ce3:b1a4:c2ef:ff2c:0ac1
+table_add service_reture route_to_tunnel 2000::152 9002 => 00:00:00:00:00:11 1 2004:05b1:b5ea:aa1c:2104:efff:cf03:bc02

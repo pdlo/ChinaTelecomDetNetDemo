@@ -39,9 +39,11 @@ ucli
 pm port-add 9/0 10g none
 pm port-add 13/0 10g none
 pm port-add 33/0 10g none
+pm port-add 33/1 10g none
 pm port-enb 9/0
 pm port-enb 13/0
 pm port-enb 33/0
+pm port-enb 33/1
 pm show
 
 ## 退出界面

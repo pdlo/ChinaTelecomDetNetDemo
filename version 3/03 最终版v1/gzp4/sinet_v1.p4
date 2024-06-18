@@ -360,6 +360,14 @@ control Ingress(
                 // 172.29.89.126
                 ig_intr_tm_md.ucast_egress_port = 64;
             }
+            else if(hdr.arp.target_ip == 0xac1d5973){
+                // 172.29.89.115
+                ig_intr_tm_md.ucast_egress_port = 132;
+            }
+            else if(hdr.arp.target_ip == 0xac1d5974){
+                // 172.29.89.116
+                ig_intr_tm_md.ucast_egress_port = 65;
+            }
             else {
 
             }
@@ -376,6 +384,7 @@ control Ingress(
             //deal with ipv4 packet
             mapping_ipv4.apply();
             if(hdr.tcp.isValid()){
+                hdr.ipv4.diffserv=0;
                 trafficclass_set.apply();
                 dscp_get.apply();
                 meta.packet_cnt_add_ingress=1;
@@ -384,7 +393,7 @@ control Ingress(
                 meta.packet_len_add_egress=14+hdr.ipv4.total_len;
             }
             else if(hdr.udp.isValid()){
-                hdr.ipv4.diffserv=0;
+                hdr.ipv4.diffserv=128;
                 meta.packet_cnt_add_ingress=1;
                 meta.packet_len_add_ingress=14+hdr.ipv4.total_len;
                 meta.packet_cnt_add_egress=1;
@@ -399,16 +408,16 @@ control Ingress(
                     hdr.probe_data[0].setValid();
                     hdr.probe_data[0].port_ingress = (bit<8>)ig_intr_md.ingress_port;
                     hdr.probe_data[0].port_egress = (bit<8>)ig_intr_tm_md.ucast_egress_port;
-                    // hdr.probe_data[0].current_time_ingress = ig_intr_prsr_md.global_tstamp;
-                    hdr.probe_data[0].current_time_ingress = ig_intr_md.ingress_mac_tstamp;
+                    hdr.probe_data[0].current_time_ingress = ig_intr_prsr_md.global_tstamp;
+                    //hdr.probe_data[0].current_time_ingress = ig_intr_md.ingress_mac_tstamp;
                 }
                 else if (hdr.probe.data_cnt == 1) {
                     hdr.probe.data_cnt = hdr.probe.data_cnt + 1;
                     hdr.probe_data[1].setValid();
                     hdr.probe_data[1].port_ingress = (bit<8>)ig_intr_md.ingress_port;
                     hdr.probe_data[1].port_egress = (bit<8>)ig_intr_tm_md.ucast_egress_port;
-                    // hdr.probe_data[1].current_time_ingress = ig_intr_prsr_md.global_tstamp;
-                    hdr.probe_data[0].current_time_ingress = ig_intr_md.ingress_mac_tstamp;
+                    hdr.probe_data[1].current_time_ingress = ig_intr_prsr_md.global_tstamp;
+                    //hdr.probe_data[1].current_time_ingress = ig_intr_md.ingress_mac_tstamp;
                 }
                 meta.packet_cnt_add_ingress = 0;
                 meta.packet_len_add_ingress = 0;

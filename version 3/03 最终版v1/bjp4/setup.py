@@ -70,6 +70,10 @@ mapping_ipv6.add_with_ipv6_forward(dst_ipv6=0x24028800FFFE010E0000000010600082, 
 mapping_ipv6.add_with_ipv6_forward(dst_ipv6=0xff0200000000000000000001ff600083, dscp=0, port=56)
 #172.27.15.131
 mapping_ipv6.add_with_ipv6_forward(dst_ipv6=0x24028800FFFE010E0000000010600083, dscp=0, port=56)
+#172.27.15.132组播arp
+mapping_ipv6.add_with_ipv6_forward(dst_ipv6=0xff0200000000000000000001ff600084, dscp=0, port=65)
+#172.27.15.132
+mapping_ipv6.add_with_ipv6_forward(dst_ipv6=0x24028800FFFE010E0000000010600084, dscp=0, port=65)
 #172.27.15.129组播arp
 mapping_ipv6.add_with_ipv6_forward(dst_ipv6=0xff0200000000000000000001ff600001, dscp=0, port=64)
 #172.27.15.129
@@ -86,6 +90,8 @@ mapping_ipv4 = p4.Ingress.mapping_ipv4
 mapping_ipv4.add_with_ipv4_forward(dst_ipv4=0xac1b0f82, port=24)
 #172.27.15.131
 mapping_ipv4.add_with_ipv4_forward(dst_ipv4=0xac1b0f83, port=56)
+#172.27.15.132
+mapping_ipv4.add_with_ipv4_forward(dst_ipv4=0xac1b0f84, port=65)
 #172.27.15.129
 mapping_ipv4.add_with_ipv4_forward(dst_ipv4=0xac1b0f81, port=64)
 #172.29.89.113
@@ -107,21 +113,25 @@ trafficclass_set.add_with_get_traffic_class(src_ipv4=0xac1b0f82, dst_ipv4=0xac1b
 #172.27.15.131->172.27.15.130, 7777, 1
 trafficclass_set.add_with_get_traffic_class(src_ipv4=0xac1b0f83, dst_ipv4=0xac1b0f82, dst_port=7777, trafficclass=1)
 
+
 dscp_get = p4.Ingress.dscp_get
 #172.27.15.131, 1, 1
 dscp_get.add_with_set_dscp(dst_ipv4=0xac1b0f83, trafficclass=1, dscp=1)
 #172.27.15.130, 1, 1
 dscp_get.add_with_set_dscp(dst_ipv4=0xac1b0f82, trafficclass=1, dscp=1)
 
+
 register_index_get_ingress = p4.Ingress.register_index_get_ingress
 register_index_get_ingress.add_with_set_register_index_ingress(ingress_port=24, ingress_index=13)
 register_index_get_ingress.add_with_set_register_index_ingress(ingress_port=56, ingress_index=9)
 register_index_get_ingress.add_with_set_register_index_ingress(ingress_port=64, ingress_index=33)
+register_index_get_ingress.add_with_set_register_index_ingress(ingress_port=65, ingress_index=34)
 
 register_index_get_egress = p4.Ingress.register_index_get_egress
 register_index_get_egress.add_with_set_register_index_egress(ucast_egress_port=24, egress_index=13)
 register_index_get_egress.add_with_set_register_index_egress(ucast_egress_port=56, egress_index=9)
 register_index_get_egress.add_with_set_register_index_egress(ucast_egress_port=64, egress_index=33)
+register_index_get_egress.add_with_set_register_index_egress(ucast_egress_port=65, egress_index=34)
 
 bfrt.complete_operations()
 

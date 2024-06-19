@@ -13,7 +13,7 @@ const bit<8>  IP_PROTO_ICMP = 1;
 const bit<8>  IP_PROTO_TCP = 6;
 const bit<8>  IP_PROTO_UDP = 17;
 const bit<8>  IP_PROTO_INT = 150;
-
+const bit<8>  IP_PROTO_TUNNEL = 160;
 /*************************************************************************
 *********************** H E A D E R S  ***********************************
 *************************************************************************/
@@ -112,8 +112,8 @@ header probe_data_t {
 struct my_ingress_headers_t {
     ethernet_t               ethernet;
     arp_h                    arp;
-    ipv6_t                   ipv6;
     ipv4_t                   ipv4;
+    ipv6_t                   ipv6;
     tcp_t                    tcp;
     udp_t                    udp;
     icmp_t                   icmp;
@@ -160,19 +160,31 @@ parser IngressParser(packet_in pkt,
         pkt.extract(hdr.arp);
         transition accept;
     }
+    // state parse_ipv6{
+    //     pkt.extract(hdr.ipv6);
+    //     transition accept;
+    // }
     state parse_ipv6{
         pkt.extract(hdr.ipv6);
-        transition accept;
+        transition select(hdr.ipv6.next_hdr){
+            IP_PROTO_TCP: parse_tcp;
+            default: accept;
+        }
     }
     state parse_ipv4{
         pkt.extract(hdr.ipv4);
         transition select(hdr.ipv4.protocol){
+            IP_PROTO_TUNNEL: parse_tunnel;
             IP_PROTO_ICMP: parse_icmp;
             IP_PROTO_TCP: parse_tcp;
             IP_PROTO_UDP: parse_udp;
             IP_PROTO_INT: parse_int;
             default: accept;
         }
+    }
+    state parse_tunnel{
+        pkt.extract(hdr.ipv6);
+        transition parse_tcp;
     }
     state parse_icmp {
         pkt.extract(hdr.icmp);
@@ -287,19 +299,35 @@ control Ingress(
         const default_action = drop();
     }
 //******************************************************
-    action get_traffic_class(bit<8> trafficclass) {
+    action get_traffic_class_dst(bit<8> trafficclass) {
         meta.trafficclass = trafficclass; 
     }
-    table trafficclass_set{
+    table trafficclass_set_dst{
         key={
             hdr.ipv4.src_ipv4: exact;
             hdr.ipv4.dst_ipv4: exact;
             hdr.tcp.dst_port: exact;
         }
         actions={
-            get_traffic_class();
+            get_traffic_class_dst();
+            NoAction();
         }
-        default_action=get_traffic_class(0);
+        default_action=NoAction();
+    }
+    action get_traffic_class_src(bit<8> trafficclass) {
+        meta.trafficclass = trafficclass; 
+    }
+    table trafficclass_set_src{
+        key={
+            hdr.ipv4.src_ipv4: exact;
+            hdr.ipv4.dst_ipv4: exact;
+            hdr.tcp.src_port: exact;
+        }
+        actions={
+            NoAction();
+            get_traffic_class_src();
+        }
+        default_action=NoAction();
     }
 //******************************************************
     action set_dscp(bit<8> dscp){
@@ -313,8 +341,9 @@ control Ingress(
         actions={
             set_dscp();
             drop();
+            NoAction();
         }
-        default_action = drop();
+        default_action = NoAction();
     }
 //******************************************************
     action set_register_index_ingress(bit<32> ingress_index){
@@ -341,6 +370,44 @@ control Ingress(
         actions={
             set_register_index_egress();
             drop();
+        }
+        default_action = drop();
+    }
+    action route_to_server(bit<48> dst_mac,PortId_t port,bit<128> dst_ipv6){
+        hdr.ethernet.src_mac=hdr.ethernet.dst_mac;
+        hdr.ethernet.dst_mac=dst_mac;
+        ig_intr_tm_md.ucast_egress_port = port;
+        hdr.ipv6.dst_ipv6=dst_ipv6;
+        hdr.ipv4.setInvalid();
+        hdr.ethernet.ether_type=ETH_TYPE_IPV6;
+    }
+    table service{
+        key={
+            hdr.ipv6.dst_ipv6:exact;
+            hdr.tcp.dst_port:exact;
+        }
+        actions={
+            route_to_server;
+            drop;
+        }
+        default_action = drop();
+    }
+    action route_to_tunnel(bit<48> dst_mac,PortId_t port,bit<128> src_ipv6){
+        hdr.ethernet.src_mac=hdr.ethernet.dst_mac;
+        hdr.ethernet.dst_mac=dst_mac;
+        ig_intr_tm_md.ucast_egress_port = port;
+        hdr.ipv6.src_ipv6=src_ipv6;
+        hdr.ipv4.setValid();
+        hdr.ethernet.ether_type=ETH_TYPE_IPV4;
+        //TODO:添加相关ipv4隧道报文信息
+    }
+    table service_reture{
+        key={
+            hdr.ipv6.dst_ipv6:exact;
+        }
+        actions={
+            route_to_tunnel;
+            drop;
         }
         default_action = drop();
     }
@@ -373,15 +440,32 @@ control Ingress(
             meta.packet_len_add_egress = 0;
         }
         else if (hdr.ipv6.isValid()) {
-            //deal with ipv6 packet
-            mapping_ipv6.apply();
+            if(hdr.tcp.isValid()){
+                if(!hdr.ipv4.isValid()){
+                service_reture.apply();
+                meta.packet_cnt_add_ingress = 1;
+                meta.packet_len_add_ingress = 54+hdr.ipv6.payload_len;
+                meta.packet_cnt_add_egress = 1;
+                meta.packet_len_add_egress = 74+hdr.ipv6.payload_len;
+            }else{
+                service.apply();
+                meta.packet_cnt_add_ingress = 1;
+                meta.packet_len_add_ingress = 74+hdr.ipv6.payload_len;
+                meta.packet_cnt_add_egress = 1;
+                meta.packet_len_add_egress = 54+hdr.ipv6.payload_len;
+            }
+            }else if(!hdr.tcp.isValid()){
+                mapping_ipv6.apply();
+            }
         }
         else if (hdr.ipv4.isValid()) {
             //deal with ipv4 packet
             mapping_ipv4.apply();
             if(hdr.tcp.isValid()){
                 hdr.ipv4.diffserv=0;
-                trafficclass_set.apply();
+                meta.trafficclass=0;
+                trafficclass_set_dst.apply();
+                trafficclass_set_src.apply();
                 dscp_get.apply();
                 meta.packet_cnt_add_ingress=1;
                 meta.packet_len_add_ingress=14+hdr.ipv4.total_len;
@@ -472,8 +556,8 @@ control IngressDeparser(packet_out pkt,
         );
         pkt.emit(hdr.ethernet);
         pkt.emit(hdr.arp);
-        pkt.emit(hdr.ipv6);
         pkt.emit(hdr.ipv4);
+        pkt.emit(hdr.ipv6);
         pkt.emit(hdr.tcp);
         pkt.emit(hdr.udp);
         pkt.emit(hdr.icmp);

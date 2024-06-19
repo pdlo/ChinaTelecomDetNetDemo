@@ -78,11 +78,16 @@ mapping_ipv6.add_with_ipv6_forward(dst_ipv6=0x24028800FFFE010E0000000010600084, 
 mapping_ipv6.add_with_ipv6_forward(dst_ipv6=0xff0200000000000000000001ff600001, dscp=0, port=64)
 #172.27.15.129
 mapping_ipv6.add_with_ipv6_forward(dst_ipv6=0x24028800FFFE010E0000000010600001, dscp=0, port=64)
+
 #172.29.89.113
 mapping_ipv6.add_with_ipv6_forward(dst_ipv6=0x24028800FFFE01130000000000000071, dscp=0, port=64)
 #172.29.89.114
 mapping_ipv6.add_with_ipv6_forward(dst_ipv6=0x24028800FFFE01130000000000000072, dscp=0, port=64)
-#172.29.89.118
+#172.29.89.115
+mapping_ipv6.add_with_ipv6_forward(dst_ipv6=0x24028800FFFE01130000000000000073, dscp=0, port=64)
+#172.29.89.116
+mapping_ipv6.add_with_ipv6_forward(dst_ipv6=0x24028800FFFE01130000000000000074, dscp=0, port=64)
+#172.29.89.126
 mapping_ipv6.add_with_ipv6_forward(dst_ipv6=0x24028800FFFE01130000000000000001, dscp=0, port=64)
 
 mapping_ipv4 = p4.Ingress.mapping_ipv4
@@ -94,6 +99,7 @@ mapping_ipv4.add_with_ipv4_forward(dst_ipv4=0xac1b0f83, port=56)
 mapping_ipv4.add_with_ipv4_forward(dst_ipv4=0xac1b0f84, port=65)
 #172.27.15.129
 mapping_ipv4.add_with_ipv4_forward(dst_ipv4=0xac1b0f81, port=64)
+
 #172.29.89.113
 mapping_ipv4.add_with_ipv4_forward(dst_ipv4=0xac1d5971, port=64)
 #198.18.204.113
@@ -102,23 +108,150 @@ mapping_ipv4.add_with_ipv4_forward(dst_ipv4=0xc612cc71, port=64)
 mapping_ipv4.add_with_ipv4_forward(dst_ipv4=0xac1d5972, port=64)
 #198.18.204.114
 mapping_ipv4.add_with_ipv4_forward(dst_ipv4=0xc612cc72, port=64)
+#172.29.89.115
+mapping_ipv4.add_with_ipv4_forward(dst_ipv4=0xac1d5973, port=64)
+#198.18.204.115
+mapping_ipv4.add_with_ipv4_forward(dst_ipv4=0xc612cc73, port=64)
+#172.29.89.116
+mapping_ipv4.add_with_ipv4_forward(dst_ipv4=0xac1d5974, port=64)
+#198.18.204.116
+mapping_ipv4.add_with_ipv4_forward(dst_ipv4=0xc612cc74, port=64)
 #172.29.89.126
 mapping_ipv4.add_with_ipv4_forward(dst_ipv4=0xac1d597e, port=64)
 #198.18.204.126
 mapping_ipv4.add_with_ipv4_forward(dst_ipv4=0xc612cc7e, port=64)
 
-trafficclass_set = p4.Ingress.trafficclass_set
-#172.27.15.130->172.27.15.131, 7777, 1
-trafficclass_set.add_with_get_traffic_class(src_ipv4=0xac1b0f82, dst_ipv4=0xac1b0f83, dst_port=7777, trafficclass=1)
-#172.27.15.131->172.27.15.130, 7777, 1
-trafficclass_set.add_with_get_traffic_class(src_ipv4=0xac1b0f83, dst_ipv4=0xac1b0f82, dst_port=7777, trafficclass=1)
+trafficclass_set_dst = p4.Ingress.trafficclass_set_dst
+#172.27.15.130->172.27.15.131, 7777, 0
+trafficclass_set_dst.add_with_get_traffic_class_dst(src_ipv4=0xac1b0f82, dst_ipv4=0xac1b0f83, dst_port=7777, trafficclass=0)
+#172.27.15.131->172.27.15.130, 7777, 0
+trafficclass_set_dst.add_with_get_traffic_class_dst(src_ipv4=0xac1b0f83, dst_ipv4=0xac1b0f82, dst_port=7777, trafficclass=0)
+#172.27.15.130->198.18.204.113, 7777, 0
+trafficclass_set_dst.add_with_get_traffic_class_dst(src_ipv4=0xac1b0f82, dst_ipv4=0xc612cc71, dst_port=7777, trafficclass=0)
+#198.18.204.113->172.27.15.130, 7777, 0
+trafficclass_set_dst.add_with_get_traffic_class_dst(src_ipv4=0xc612cc71, dst_ipv4=0xac1b0f82, dst_port=7777, trafficclass=0)
+#172.27.15.131->198.18.204.114, 7777, 0
+trafficclass_set_dst.add_with_get_traffic_class_dst(src_ipv4=0xac1b0f83, dst_ipv4=0xc612cc72, dst_port=7777, trafficclass=0)
+#198.18.204.114->172.27.15.131, 7777, 0
+trafficclass_set_dst.add_with_get_traffic_class_dst(src_ipv4=0xc612cc72, dst_ipv4=0xac1b0f83, dst_port=7777, trafficclass=0)
+
+#172.27.15.130->198.18.204.113, 10054, 0
+trafficclass_set_dst.add_with_get_traffic_class_dst(src_ipv4=0xac1b0f82, dst_ipv4=0xc612cc71, dst_port=10054, trafficclass=1)
+#198.18.204.113->172.27.15.130, 10054, 0
+trafficclass_set_dst.add_with_get_traffic_class_dst(src_ipv4=0xc612cc71, dst_ipv4=0xac1b0f82, dst_port=10054, trafficclass=1)
+
+#172.27.15.130->198.18.204.113, 6789, 0
+trafficclass_set_dst.add_with_get_traffic_class_dst(src_ipv4=0xac1b0f82, dst_ipv4=0xc612cc71, dst_port=6789, trafficclass=2)
+#198.18.204.113->172.27.15.130, 6789, 0
+trafficclass_set_dst.add_with_get_traffic_class_dst(src_ipv4=0xc612cc71, dst_ipv4=0xac1b0f82, dst_port=6789, trafficclass=2)
+
+#172.27.15.130->198.18.204.113, 9000, 0
+trafficclass_set_dst.add_with_get_traffic_class_dst(src_ipv4=0xac1b0f82, dst_ipv4=0xc612cc71, dst_port=9000, trafficclass=3)
+#198.18.204.113->172.27.15.130, 9000, 0
+trafficclass_set_dst.add_with_get_traffic_class_dst(src_ipv4=0xc612cc71, dst_ipv4=0xac1b0f82, dst_port=9000, trafficclass=3)
+
+#----------------------------------------------------------------------------------------------------------------------------------
+#172.27.15.131->198.18.204.114, 10054, 0
+trafficclass_set_dst.add_with_get_traffic_class_dst(src_ipv4=0xac1b0f83, dst_ipv4=0xc612cc72, dst_port=10054, trafficclass=1)
+#198.18.204.114->172.27.15.131, 10054, 0
+trafficclass_set_dst.add_with_get_traffic_class_dst(src_ipv4=0xc612cc72, dst_ipv4=0xac1b0f83, dst_port=10054, trafficclass=1)
+
+#172.27.15.131->198.18.204.114, 6789, 0
+trafficclass_set_dst.add_with_get_traffic_class_dst(src_ipv4=0xac1b0f83, dst_ipv4=0xc612cc72, dst_port=6789, trafficclass=2)
+#198.18.204.114->172.27.15.131, 6789, 0
+trafficclass_set_dst.add_with_get_traffic_class_dst(src_ipv4=0xc612cc72, dst_ipv4=0xac1b0f83, dst_port=6789, trafficclass=2)
+
+#172.27.15.131->198.18.204.114, 9000, 0
+trafficclass_set_dst.add_with_get_traffic_class_dst(src_ipv4=0xac1b0f83, dst_ipv4=0xc612cc72, dst_port=9000, trafficclass=3)
+#198.18.204.114->172.27.15.131, 9000, 0
+trafficclass_set_dst.add_with_get_traffic_class_dst(src_ipv4=0xc612cc72, dst_ipv4=0xac1b0f83, dst_port=9000, trafficclass=3)
+#----------------------------------------------------------------------------------------------------------------------------------
+trafficclass_set_src = p4.Ingress.trafficclass_set_src
+#172.27.15.130->172.27.15.131, 7777, 0
+trafficclass_set_src.add_with_get_traffic_class_src(src_ipv4=0xac1b0f82, dst_ipv4=0xac1b0f83, src_port=7777, trafficclass=0)
+#172.27.15.131->172.27.15.130, 7777, 0
+trafficclass_set_src.add_with_get_traffic_class_src(src_ipv4=0xac1b0f83, dst_ipv4=0xac1b0f82, src_port=7777, trafficclass=0)
+#172.27.15.130->198.18.204.113, 7777, 0
+trafficclass_set_src.add_with_get_traffic_class_src(src_ipv4=0xac1b0f82, dst_ipv4=0xc612cc71, src_port=7777, trafficclass=0)
+#198.18.204.113->172.27.15.130, 7777, 0
+trafficclass_set_src.add_with_get_traffic_class_src(src_ipv4=0xc612cc71, dst_ipv4=0xac1b0f82, src_port=7777, trafficclass=0)
+#172.27.15.131->198.18.204.114, 7777, 0
+trafficclass_set_src.add_with_get_traffic_class_src(src_ipv4=0xac1b0f83, dst_ipv4=0xc612cc72, src_port=7777, trafficclass=0)
+#198.18.204.114->172.27.15.131, 7777, 0
+trafficclass_set_src.add_with_get_traffic_class_src(src_ipv4=0xc612cc72, dst_ipv4=0xac1b0f83, src_port=7777, trafficclass=0)
+
+#172.27.15.130->198.18.204.113, 10054, 1
+trafficclass_set_src.add_with_get_traffic_class_src(src_ipv4=0xac1b0f82, dst_ipv4=0xc612cc71, src_port=10054, trafficclass=1)
+#198.18.204.113->172.27.15.130, 10054, 1
+trafficclass_set_src.add_with_get_traffic_class_src(src_ipv4=0xc612cc71, dst_ipv4=0xac1b0f82, src_port=10054, trafficclass=1)
+
+#172.27.15.130->198.18.204.113, 6789, 2
+trafficclass_set_src.add_with_get_traffic_class_src(src_ipv4=0xac1b0f82, dst_ipv4=0xc612cc71, src_port=6789, trafficclass=2)
+#198.18.204.113->172.27.15.130, 6789, 2
+trafficclass_set_src.add_with_get_traffic_class_src(src_ipv4=0xc612cc71, dst_ipv4=0xac1b0f82, src_port=6789, trafficclass=2)
+
+#172.27.15.130->198.18.204.113, 9000, 3
+trafficclass_set_src.add_with_get_traffic_class_src(src_ipv4=0xac1b0f82, dst_ipv4=0xc612cc71, src_port=9000, trafficclass=3)
+#198.18.204.113->172.27.15.130, 9000, 3
+trafficclass_set_src.add_with_get_traffic_class_src(src_ipv4=0xc612cc71, dst_ipv4=0xac1b0f82, src_port=9000, trafficclass=3)
+
+#172.27.15.131->198.18.204.114, 10054, 1
+trafficclass_set_src.add_with_get_traffic_class_src(src_ipv4=0xac1b0f83, dst_ipv4=0xc612cc72, src_port=10054, trafficclass=1)
+#198.18.204.114->172.27.15.131, 10054, 1
+trafficclass_set_src.add_with_get_traffic_class_src(src_ipv4=0xc612cc72, dst_ipv4=0xac1b0f83, src_port=10054, trafficclass=1)
+
+#172.27.15.131->198.18.204.114, 6789, 2
+trafficclass_set_src.add_with_get_traffic_class_src(src_ipv4=0xac1b0f83, dst_ipv4=0xc612cc72, src_port=6789, trafficclass=2)
+#198.18.204.114->172.27.15.131, 6789, 2
+trafficclass_set_src.add_with_get_traffic_class_src(src_ipv4=0xc612cc72, dst_ipv4=0xac1b0f83, src_port=6789, trafficclass=2)
+
+#172.27.15.131->198.18.204.114, 9000, 3
+trafficclass_set_src.add_with_get_traffic_class_src(src_ipv4=0xac1b0f83, dst_ipv4=0xc612cc72, src_port=9000, trafficclass=3)
+#198.18.204.114->172.27.15.131, 9000, 3
+trafficclass_set_src.add_with_get_traffic_class_src(src_ipv4=0xc612cc72, dst_ipv4=0xac1b0f83, src_port=9000, trafficclass=3)
+
 
 
 dscp_get = p4.Ingress.dscp_get
-#172.27.15.131, 1, 1
-dscp_get.add_with_set_dscp(dst_ipv4=0xac1b0f83, trafficclass=1, dscp=1)
-#172.27.15.130, 1, 1
-dscp_get.add_with_set_dscp(dst_ipv4=0xac1b0f82, trafficclass=1, dscp=1)
+#172.27.15.131, 0, 0
+dscp_get.add_with_set_dscp(dst_ipv4=0xac1b0f83, trafficclass=0, dscp=0)
+#172.27.15.130, 0, 0
+dscp_get.add_with_set_dscp(dst_ipv4=0xac1b0f82, trafficclass=0, dscp=0)
+#198.18.204.113, 0 0
+dscp_get.add_with_set_dscp(dst_ipv4=0xc612cc71, trafficclass=0, dscp=0)
+#198.18.204.114, 0 0
+dscp_get.add_with_set_dscp(dst_ipv4=0xc612cc72, trafficclass=0, dscp=0)
+
+
+#172.27.15.130, 1, 32
+dscp_get.add_with_set_dscp(dst_ipv4=0xac1b0f82, trafficclass=1, dscp=128)
+#198.18.204.113, 1 32
+dscp_get.add_with_set_dscp(dst_ipv4=0xc612cc71, trafficclass=1, dscp=128)
+
+#172.27.15.130, 2, 0
+dscp_get.add_with_set_dscp(dst_ipv4=0xac1b0f82, trafficclass=2, dscp=0)
+#198.18.204.113, 2 0
+dscp_get.add_with_set_dscp(dst_ipv4=0xc612cc71, trafficclass=2, dscp=0)
+
+#172.27.15.130, 3, 31
+dscp_get.add_with_set_dscp(dst_ipv4=0xac1b0f82, trafficclass=3, dscp=124)
+#198.18.204.113, 3, 31
+dscp_get.add_with_set_dscp(dst_ipv4=0xc612cc71, trafficclass=3, dscp=124)
+
+#172.27.15.131, 1, 32
+dscp_get.add_with_set_dscp(dst_ipv4=0xac1b0f83, trafficclass=1, dscp=128)
+#198.18.204.114, 1 32
+dscp_get.add_with_set_dscp(dst_ipv4=0xc612cc72, trafficclass=1, dscp=128)
+
+#172.27.15.131, 2, 0
+dscp_get.add_with_set_dscp(dst_ipv4=0xac1b0f83, trafficclass=2, dscp=0)
+#198.18.204.114, 2 0
+dscp_get.add_with_set_dscp(dst_ipv4=0xc612cc72, trafficclass=2, dscp=0)
+
+#172.27.15.131, 3, 31
+dscp_get.add_with_set_dscp(dst_ipv4=0xac1b0f83, trafficclass=3, dscp=124)
+#198.18.204.114, 3, 31
+dscp_get.add_with_set_dscp(dst_ipv4=0xc612cc72, trafficclass=3, dscp=124)
 
 
 register_index_get_ingress = p4.Ingress.register_index_get_ingress
@@ -143,8 +276,10 @@ print ("Table mapping_ipv6:")
 mapping_ipv6.dump(table=True)
 print ("Table mapping_ipv4:")
 mapping_ipv4.dump(table=True)
-print ("Table trafficclass_set:")
-trafficclass_set.dump(table=True)
+print ("Table trafficclass_set_dst:")
+trafficclass_set_dst.dump(table=True)
+print ("Table trafficclass_set_src:")
+trafficclass_set_src.dump(table=True)
 print ("Table dscp_get:")
 dscp_get.dump(table=True)
 print ("Table register_index_get_ingress:")

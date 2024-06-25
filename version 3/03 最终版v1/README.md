@@ -8,3 +8,8 @@
 2、IPv4-dscp引流转发
 
 3、INT转发
+
+北京和广州两台交换机运行p4代码，
+对于普通ipv6数据包，直接使用mapping_ipv6表按照 hdr.ipv6.src_ipv6和hdr.ipv6.dst_ipv6进行匹配确定转发端口。
+对于ipv4数据包，一律使用mapping_ipv4表按照hdr.ipv4.dst_ipv4进行匹配确定转发端口。TCP包比较特殊，在确定转发端口后使用trafficclass_set_dst和trafficclass_set_src确定meta.trafficclass，然后再使用dscp_get根据meta.trafficclass和hdr.ipv4.dst_ipv4确定hdr.ipv4.diffserv，然后发送出去。
+所有数据包都会使用register_index_get_ingress和register_index_get_egress进行端口映射

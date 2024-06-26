@@ -7,7 +7,7 @@ from sqlmodel import Field, SQLModel, create_engine, Relationship
 from pathlib import Path
 from datetime import datetime
 
-__all__=['Sgw','SgwInterface','SgwLink','SgwLinkState','Cpe','Host','Business','Route','get_engine']
+__all__=['Sgw','SgwLink','SgwLinkState','Cpe','Host','Business','Route','get_engine']
 
 class Sgw(SQLModel, table=True):
     """
@@ -20,16 +20,6 @@ class Sgw(SQLModel, table=True):
     srv6_locator:str = Field(description="半个ipv6地址（64bit），使用类似2001:0db8的格式")
 
     sgwlink:List['SgwLink'] = Relationship(back_populates='src_sgw',sa_relationship_kwargs=dict(foreign_keys="[SgwLink.src_sgw_id]"))
-
-class SgwInterface(SQLModel, table=True):
-    """
-    此表id被作为外键，不应该删除数据。
-    此表是手动根据网络配置填写的。
-    """
-    id: Optional[int] = Field(default=None, primary_key=True)
-    name:str
-    sgw_id:int = Field(foreign_key="sgw.id")
-    bmv2_port:Optional[int] = Field(default=None,description="交换机网卡对应的bmv2 port")
 
 class SgwLink(SQLModel, table=True):
     """

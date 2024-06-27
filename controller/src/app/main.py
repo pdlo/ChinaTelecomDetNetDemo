@@ -11,6 +11,7 @@ root=Path(__file__).parent.parent.parent
 sys.path.append(str(root))
 
 from src.app.read_db import get_latest_link_states,get_all_routes,get_bussiness,add_business
+from src.app.utils import logger
 
 page_title="基于业务感知和控制的确定性网络关键技术研究与验证项目实验与演示系统"
 

@@ -22,7 +22,7 @@ INSERT INTO "sgwlink" ("src_sgw_id", "src_bmv2_port", "dst_sgw_id", "dst_bmv2_po
 INSERT INTO "cpe" ("id", "name", "console_ip", "connect_sgw","port_to_sgw", "srv6_locator","subnet_ip","subnet_mask") VALUES (1, '152', '219.242.112.215:6152', 1, 156,'0000:0152','10.152.0.0',16);
 INSERT INTO "cpe" ("id", "name", "console_ip", "connect_sgw","port_to_sgw", "srv6_locator","subnet_ip","subnet_mask") VALUES (2, '153', '219.242.112.215:6153', 4, 156,'0000:0153','10.153.0.0',16);
 
-INSERT INTO "host" ("id", "name", "ip", "mac", "cpe_id",'cpe_bmv2_port') VALUES (1, '162', '10.152.162.2', 'b8:ce:f6:9c:24:be', 1,64);
+INSERT INTO "host" ("id", "name", "ip", "mac", "cpe_id",'cpe_bmv2_port') VALUES (1, '162', '10.151.162.2', 'b8:ce:f6:9c:24:be', 1,64);
 INSERT INTO "host" ("id", "name", "ip", "mac", "cpe_id",'cpe_bmv2_port') VALUES (2, '168', '10.153.168.2', 'b8:ce:f6:9c:18:a2', 2,64);
 
 /* 路由 */

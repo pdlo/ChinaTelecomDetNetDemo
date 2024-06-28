@@ -31,7 +31,7 @@ def _entry_params_to_string(x:table_entry_params) -> str:
         r.append(code)
     return ',\n'.join(r)
 
-def _make_code(
+def make_bfrt_update_table_code(
         table: str, 
         match_params: table_entry_params, 
         action: str, 
@@ -88,7 +88,24 @@ class Tofino(P4Switch):
                            action: str, 
                            action_params: table_entry_params = {}
                           ) -> None:
-        code=_make_code(table,match_params,action,action_params)
+        """
+        下发流表。
+
+        :param table: 表名
+        :param match_params: 匹配参数
+        :type match_params: table_entry_params
+        :param action: 动作名
+        :param action_params: 动作参数
+        
+        两个参数的类型均为dict，key为str，value为int。
+        作为地址时，value也可以传入以下类型，它们会被处理并转化成16进制数：
+            - ipaddress.IPv4Address
+            - ipaddress.IPv4Network
+            - p4_command_controller.MacAddress
+        
+        如果对效果有疑问，可以手动调用make code，查看合成的代码。
+        """
+        code=make_bfrt_update_table_code(table,match_params,action,action_params)
         self.send_code(code)
 
     def send_code(self,code:str,is_delete=True) -> None:
